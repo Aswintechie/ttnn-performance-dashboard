@@ -1,8 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { BarChart3, RefreshCw, AlertCircle, Activity } from 'lucide-react';
+import { BarChart3, RefreshCw, AlertCircle } from 'lucide-react';
 import OverviewCards from './components/OverviewCards';
 import PerformanceTable from './components/PerformanceTable';
-import TrendChart from './components/TrendChart';
 import { 
   loadPerformanceData, 
   processOperationData, 
@@ -15,7 +14,6 @@ function App() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [lastRefresh, setLastRefresh] = useState(null);
-  const [activeTab, setActiveTab] = useState('overview');
 
   const loadData = async () => {
     try {
@@ -76,11 +74,6 @@ function App() {
   if (loading) return <LoadingState />;
   if (error) return <ErrorState />;
 
-  const tabs = [
-    { id: 'overview', name: 'Overview', icon: BarChart3 },
-    { id: 'trends', name: 'Trends', icon: Activity }
-  ];
-
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Header */}
@@ -114,45 +107,15 @@ function App() {
         </div>
       </header>
 
-      {/* Navigation Tabs */}
-      <nav className="bg-white shadow-sm">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex space-x-8">
-            {tabs.map((tab) => (
-              <button
-                key={tab.id}
-                onClick={() => setActiveTab(tab.id)}
-                className={`flex items-center px-1 py-4 text-sm font-medium border-b-2 transition-colors duration-200 ${
-                  activeTab === tab.id
-                    ? 'border-primary-500 text-primary-600'
-                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-                }`}
-              >
-                <tab.icon className="h-4 w-4 mr-2" />
-                {tab.name}
-              </button>
-            ))}
-          </div>
-        </div>
-      </nav>
-
       {/* Main Content */}
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {activeTab === 'overview' && (
-          <div className="animate-fade-in">
-            <OverviewCards 
-              summaryStats={summaryStats} 
-              dailyComparison={dailyComparison} 
-            />
-            <PerformanceTable operations={processedOperations} />
-          </div>
-        )}
-
-        {activeTab === 'trends' && (
-          <div className="animate-fade-in">
-            <TrendChart dailyData={data?.daily || []} />
-          </div>
-        )}
+        <div className="animate-fade-in">
+          <OverviewCards 
+            summaryStats={summaryStats} 
+            dailyComparison={dailyComparison} 
+          />
+          <PerformanceTable operations={processedOperations} dailyData={data?.daily || []} />
+        </div>
       </main>
 
       {/* Footer */}
