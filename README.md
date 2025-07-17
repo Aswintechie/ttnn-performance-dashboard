@@ -16,7 +16,7 @@
 
 ## 📖 **Overview**
 
-The **Tenstorrent TT-Metal Eltwise Performance Tracker** is an advanced React-based dashboard designed to monitor and analyze the performance of TTNN (Tensor Tiling Neural Network) eltwise operations. Built specifically for Tenstorrent's TT-Metal framework, this tool provides insights into operation performance trends, comparative analysis, and comprehensive filtering capabilities.
+The **Tenstorrent TT-Metal Eltwise Performance Tracker** is an advanced React-based dashboard designed to monitor and analyze the performance of TTNN (Tenstorrent Neural Network) eltwise operations. Built specifically for Tenstorrent's TT-Metal framework, this tool provides insights into operation performance trends, comparative analysis, and comprehensive filtering capabilities.
 
 ### 🎯 **Key Features**
 
