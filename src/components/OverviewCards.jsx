@@ -38,9 +38,9 @@ const OverviewCards = ({ summaryStats, dailyComparison }) => {
       subtitle: dailyComparison ? 
         `${dailyComparison.improvement > 0 ? '↓' : '↑'} ${Math.abs(dailyComparison.improvement)}% vs yesterday` : 
         'Across all operations',
-      icon: dailyComparison?.improvement > 0 ? TrendingUp : TrendingDown,
-      color: dailyComparison?.improvement > 0 ? 'text-green-600' : 'text-orange-600',
-      bgColor: dailyComparison?.improvement > 0 ? 'bg-green-50' : 'bg-orange-50'
+      icon: dailyComparison?.improvement > 0 ? TrendingDown : TrendingUp,
+      color: dailyComparison?.improvement > 0 ? 'text-green-600' : 'text-red-600',
+      bgColor: dailyComparison?.improvement > 0 ? 'bg-green-50' : 'bg-red-50'
     },
     {
       title: 'Git Commit',
