@@ -83,8 +83,8 @@ function App() {
             <div className="flex items-center">
               <BarChart3 className="h-8 w-8 text-primary-600 mr-3" />
               <div>
-                <h1 className="text-xl font-bold text-gray-900">TTNN Performance Dashboard</h1>
-                <p className="text-sm text-gray-500">Real-time operation performance monitoring</p>
+                <h1 className="text-xl font-bold text-gray-900">Tenstorrent's TT-Metal Eltwise Performance Tracker</h1>
+                <p className="text-sm text-gray-500">Real-time eltwise operation performance monitoring</p>
               </div>
             </div>
             
@@ -123,7 +123,7 @@ function App() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between">
             <div className="text-sm text-gray-500">
-              <p>TTNN Performance Dashboard • {summaryStats?.totalOperations || 0} operations monitored</p>
+              <p>Tenstorrent TT-Metal Eltwise Performance Tracker • {summaryStats?.totalOperations || 0} operations monitored</p>
             </div>
             <div className="mt-2 sm:mt-0 text-sm text-gray-500">
               {summaryStats && (
