@@ -1,0 +1,5 @@
+name = "ttnn-performance-dashboard"
+compatibility_date = "2025-07-17"
+
+[assets]
+directory = "./dist" 
