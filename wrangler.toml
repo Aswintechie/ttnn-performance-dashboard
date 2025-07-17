@@ -1,4 +1,4 @@
-name = "ttnn-performance-dashboard"
+name = "ttnn-eltwise-performance"
 compatibility_date = "2025-07-17"
 
 [assets]

@@ -1,4 +1,4 @@
-# TTNN Eltwise Operations Catalog
+# Tenstorrent TT-Metal Eltwise Operations Catalog
 
 ## Summary
 - **Total Categories**: 6  

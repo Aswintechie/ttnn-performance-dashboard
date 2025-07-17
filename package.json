@@ -1,7 +1,7 @@
 {
-  "name": "ttnn-performance-dashboard",
+  "name": "ttnn-eltwise-performance",
   "version": "1.0.0",
-  "description": "TTNN Performance Dashboard",
+  "description": "Tenstorrent TT-Metal Eltwise Performance Tracker",
   "private": true,
   "type": "module",
   "scripts": {

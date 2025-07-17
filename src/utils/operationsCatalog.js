@@ -1,7 +1,7 @@
 export const operationsCatalog = {
   "metadata": {
-    "title": "TTNN Eltwise Operations Catalog",
-    "description": "Comprehensive list of all element-wise operations for performance tracking",
+    "title": "Tenstorrent TT-Metal Eltwise Operations Catalog",
+    "description": "Comprehensive list of all TT-Metal element-wise operations for performance tracking",
     "total_categories": 6,
     "total_operations": 289,
     "inplace_operations_included": 24,
@@ -231,7 +231,7 @@ export const operationsCatalog = {
     }
   },
   "validation": {
-    "method": "Direct TTNN attribute checking and test validation",
+    "method": "Direct TT-Metal TTNN attribute checking and test validation",
     "environment": "ttcd activated tt-metal environment",
     "test_coverage": "265/289 operations (91.7%)"
   }

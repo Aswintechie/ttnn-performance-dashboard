@@ -341,7 +341,7 @@ const PerformanceTable = ({ operations, dailyData }) => {
     <div className="card">
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-6">
         <div>
-          <h2 className="text-lg font-semibold text-gray-900 mb-1">Daily Performance Comparison</h2>
+          <h2 className="text-lg font-semibold text-gray-900 mb-1">Daily Eltwise Performance Comparison</h2>
           <p className="text-sm text-gray-500">
             {filteredAndSortedData.length} operations 
             {selectedCategories.length > 0 && ` (${selectedCategories.join(', ')} categories)`} • {dateColumns.length} days of data
