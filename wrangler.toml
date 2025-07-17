@@ -2,4 +2,9 @@ name = "ttnn-eltwise-performance"
 compatibility_date = "2025-07-17"
 
 [assets]
-directory = "./dist" 
+directory = "./dist"
+
+# Custom domain configuration
+[[routes]]
+pattern = "ttnn-eltwise-performance.aswinlocal.in/*"
+zone_name = "aswinlocal.in" 
