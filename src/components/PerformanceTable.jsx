@@ -48,16 +48,16 @@ const PerformanceTable = ({ operations, dailyData }) => {
     return converted.value.toFixed(converted.decimals);
   };
 
-  const getPerformanceColor = (currentValue, baselineValue, isFirstColumn) => {
+  const getPerformanceColor = (currentValue, previousValue, isFirstColumn) => {
     // First column (baseline) has no color
     if (isFirstColumn) return 'bg-white';
     
-    if (!baselineValue || !currentValue) return 'bg-white';
+    if (!previousValue || !currentValue) return 'bg-white';
     
-    // Calculate percentage change from baseline (cumulative change)
-    const changePercent = ((currentValue - baselineValue) / baselineValue) * 100;
+    // Calculate percentage change from previous day
+    const changePercent = ((currentValue - previousValue) / previousValue) * 100;
     
-    // More granular color gradients for cumulative changes from baseline
+    // More granular color gradients based on change from previous day
     // Performance improved (faster = negative change)
     if (changePercent <= -25) return 'bg-green-300 text-green-900';      // >25% improvement
     if (changePercent <= -20) return 'bg-green-200 text-green-900';      // 20-25% improvement
@@ -545,16 +545,15 @@ const PerformanceTable = ({ operations, dailyData }) => {
                    const previousData = previousDateObj ? operation.dailyPerformance[previousDateObj.date] : null;
                    const change = getPerformanceChange(dayData, previousData);
                    
-                   // Get baseline (first column) value for comparison
-                   const baselineValue = dateColumns.length > 0 ? 
-                     operation.dailyPerformance[dateColumns[0].date]?.duration_ns : null;
+                   // Get previous day value for comparison
+                   const previousValue = previousData?.duration_ns;
                    
                    const isFirstColumn = dateIndex === 0;
-                   const colorClass = dayData ? getPerformanceColor(dayData.duration_ns, baselineValue, isFirstColumn) : '';
+                   const colorClass = dayData ? getPerformanceColor(dayData.duration_ns, previousValue, isFirstColumn) : '';
                    
-                   // Calculate cumulative change from baseline for display
-                   const baselineChangePercent = !isFirstColumn && baselineValue && dayData ? 
-                     ((dayData.duration_ns - baselineValue) / baselineValue * 100) : 0;
+                   // Calculate change from previous day for display
+                   const previousChangePercent = !isFirstColumn && previousValue && dayData ? 
+                     ((dayData.duration_ns - previousValue) / previousValue * 100) : 0;
                    
                    return (
                      <td key={dateObj.date} className="table-cell text-center relative">
@@ -564,13 +563,13 @@ const PerformanceTable = ({ operations, dailyData }) => {
                              {formatValue(dayData.duration_ns, selectedUnit)}{selectedUnit}
                            </span>
                            
-                           {/* Show cumulative change from baseline */}
-                           {!isFirstColumn && baselineValue && (
+                           {/* Show change from previous day */}
+                           {!isFirstColumn && previousValue && (
                              <div className={`text-xs font-medium ${
-                               baselineChangePercent < -2 ? 'text-green-600' : 
-                               baselineChangePercent > 2 ? 'text-red-600' : 'text-gray-500'
+                               previousChangePercent < -2 ? 'text-green-600' : 
+                               previousChangePercent > 2 ? 'text-red-600' : 'text-gray-500'
                              }`}>
-                               {baselineChangePercent > 0 ? '+' : ''}{baselineChangePercent.toFixed(1)}%
+                               {previousChangePercent > 0 ? '+' : ''}{previousChangePercent.toFixed(1)}%
                              </div>
                            )}
                            
