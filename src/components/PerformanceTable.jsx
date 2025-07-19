@@ -503,10 +503,10 @@ const PerformanceTable = ({ operations, dailyData }) => {
         <table className="min-w-full">
           <thead>
             <tr className="border-b border-gray-200">
-              <SortableHeader sortKey="operation_name" className="sticky left-0 bg-gray-50 z-10 text-center">
+              <SortableHeader sortKey="operation_name" className="sticky left-0 bg-gray-50 z-10 text-center min-w-48 shadow-sm">
                 Operation
               </SortableHeader>
-              <th className="table-header text-center">Category</th>
+              <th className="table-header text-center sticky left-48 bg-gray-50 z-10 min-w-36 shadow-sm">Category</th>
               {dateColumns.map((dateObj, index) => (
                 <SortableHeader key={dateObj.date} sortKey={dateObj.date} className="min-w-32 text-center">
                   <div className="flex flex-col items-center">
@@ -523,11 +523,11 @@ const PerformanceTable = ({ operations, dailyData }) => {
           </thead>
           <tbody>
             {filteredAndSortedData.map((operation, index) => (
-              <tr key={operation.operation_name} className="hover:bg-gray-50 transition-colors duration-150">
-                                <td className="table-cell sticky left-0 bg-white font-medium text-gray-900 border-r border-gray-200 text-center">
+              <tr key={operation.operation_name} className="hover:bg-gray-50 transition-colors duration-150 group">
+                <td className="table-cell sticky left-0 bg-white group-hover:bg-gray-50 font-medium text-gray-900 border-r border-gray-200 text-center z-10 min-w-48 shadow-sm transition-colors duration-150">
                   {operation.operation_name}
                 </td>
-                <td className="table-cell text-center">
+                <td className="table-cell text-center sticky left-48 bg-white group-hover:bg-gray-50 z-10 border-r border-gray-200 min-w-36 shadow-sm transition-colors duration-150">
                   <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getCategoryColor(getOperationCategory(operation.operation_name))}`}>
                     {getOperationCategory(operation.operation_name)}
                   </span>
