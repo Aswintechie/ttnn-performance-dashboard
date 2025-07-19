@@ -7,7 +7,10 @@ const PerformanceTable = ({ operations, dailyData }) => {
   const [sortConfig, setSortConfig] = useState({ key: 'operation_name', direction: 'asc' });
   const [selectedUnit, setSelectedUnit] = useState('ms');
   const [performanceSort, setPerformanceSort] = useState('none');
-  const [selectedCategories, setSelectedCategories] = useState([]);
+  const [selectedCategories, setSelectedCategories] = useState([
+    'Unary', 'Binary Arithmetic', 'Binary Comparison', 'Binary Logical', 
+    'Ternary', 'Reduction', 'Complex'
+  ]);
   const [showFilters, setShowFilters] = useState(false);
   const filterRef = useRef(null);
 
