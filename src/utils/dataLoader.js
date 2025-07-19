@@ -46,7 +46,7 @@ export function calculateSummaryStats(data) {
   if (!data?.latest?.metadata) return null;
   
   const metadata = data.latest.metadata;
-  const results = data.latest.results || [];
+  const results = (data.latest.results || []).filter(r => r.operation_name !== 'argmax');
   
   const totalOperations = results.length;
   const avgDuration = results.reduce((sum, r) => sum + r.average_duration_ns, 0) / totalOperations / 1000000;
@@ -93,7 +93,9 @@ export function compareDailyData(dailyData) {
 
 function calculateAveragePerformance(results) {
   if (!results || results.length === 0) return 0;
-  return results.reduce((sum, r) => sum + r.average_duration_ns, 0) / results.length / 1000000;
+  const filteredResults = results.filter(r => r.operation_name !== 'argmax');
+  if (filteredResults.length === 0) return 0;
+  return filteredResults.reduce((sum, r) => sum + r.average_duration_ns, 0) / filteredResults.length / 1000000;
 }
 
 function getPerformanceRating(durationNs) {
