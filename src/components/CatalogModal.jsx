@@ -22,7 +22,14 @@ const CatalogModal = ({ isOpen, onClose }) => {
           'gez', 'gtz', 'i0', 'i1', 'isfinite', 'isinf', 'isnan', 'isneginf', 'isposinf', 'lez',
           'log', 'log10', 'log2', 'log1p', 'logical_not', 'ltz', 'neg', 'nez', 'reciprocal', 'relu',
           'relu6', 'sign', 'signbit', 'silu', 'sin', 'sqrt', 'square', 'tan', 'bitwise_not',
-          'floor', 'ceil', 'trunc', 'eqz', 'mish', 'tanhshrink', 'deg2rad', 'rad2deg', 'identity'
+          'floor', 'ceil', 'trunc', 'eqz', 'mish', 'tanhshrink', 'deg2rad', 'rad2deg', 'identity',
+          'exp', 'erf', 'erfc', 'gelu', 'rsqrt', 'sigmoid', 'sigmoid_accurate',
+          'elu', 'heaviside', 'leaky_relu', 'relu_max', 'relu_min', 'fill', 'glu', 'reglu',
+          'geglu', 'swiglu', 'clip', 'clamp', 'threshold',
+          'softplus', 'tanh', 'log_sigmoid', 'unary_chain', 'cbrt', 'cosh', 'digamma', 'lgamma',
+          'multigammaln', 'polygamma', 'sinh', 'softsign', 'swish', 'frac', 'hardswish',
+          'hardsigmoid', 'hardtanh', 'selu', 'tril', 'triu', 'round', 'logit', 'prelu',
+          'softshrink', 'hardshrink', 'var_hw', 'std_hw', 'logical_not_', 'celu'
         ]
       },
       binary: {
@@ -32,8 +39,17 @@ const CatalogModal = ({ isOpen, onClose }) => {
         color: 'from-green-500 to-emerald-600',
         operations: [
           'add', 'subtract', 'multiply', 'divide', 'mul', 'sub', 'rpow', 'rdiv', 'assign',
-          'gt', 'lt', 'eq', 'ne', 'ge', 'le', 'logical_and', 'logical_or', 'logical_xor',
-          'bitwise_and', 'bitwise_or', 'bitwise_xor', 'atan2', 'hypot', 'logaddexp', 'maximum', 'minimum'
+          'add_', 'subtract_', 'multiply_', 'divide_', 'mul_', 'sub_', 'div_', 'rsub_',
+          'gt', 'lt', 'eq', 'ne', 'ge', 'le',
+          'gt_', 'lt_', 'eq_', 'ne_', 'ge_', 'le_',
+          'logical_and', 'logical_or', 'logical_xor', 'ldexp', 'xlogy',
+          'logical_and_', 'logical_or_', 'logical_xor_', 'ldexp_', 'logaddexp_',
+          'bitwise_and', 'bitwise_or', 'bitwise_xor',
+          'atan2', 'hypot', 'logaddexp', 'logaddexp2', 'maximum', 'minimum', 'pow', 'fmod',
+          'remainder', 'nextafter', 'bias_gelu', 'polyval',
+          'bias_gelu_', 'logaddexp2_', 'squared_difference_',
+          'addalpha', 'subalpha', 'squared_difference', 'absolute_difference', 'isclose',
+          'round_binary', 'clip_binary'
         ]
       },
       ternary: {
@@ -57,7 +73,19 @@ const CatalogModal = ({ isOpen, onClose }) => {
         color: 'from-gray-500 to-slate-600',
         operations: [
           'abs_bw', 'acos_bw', 'acosh_bw', 'asin_bw', 'asinh_bw', 'atan_bw', 'atanh_bw',
-          'add_bw', 'atan2_bw', 'bias_gelu_bw', 'div_bw', 'addcdiv_bw', 'addcmul_bw', 'lerp_bw'
+          'ceil_bw', 'cos_bw', 'cosh_bw', 'deg2rad_bw', 'digamma_bw', 'erf_bw', 'erfc_bw',
+          'erfinv_bw', 'exp_bw', 'exp2_bw', 'expm1_bw', 'floor_bw', 'frac_bw', 'gelu_bw',
+          'hardsigmoid_bw', 'hardswish_bw', 'i0_bw', 'lgamma_bw', 'log_bw', 'log_sigmoid_bw',
+          'log1p_bw', 'log10_bw', 'log2_bw', 'logit_bw', 'multigammaln_bw', 'neg_bw',
+          'rad2deg_bw', 'reciprocal_bw', 'relu_bw', 'relu6_bw', 'round_bw', 'rsqrt_bw',
+          'selu_bw', 'sigmoid_bw', 'sign_bw', 'silu_bw', 'sin_bw', 'sinh_bw', 'softsign_bw',
+          'sqrt_bw', 'square_bw', 'tan_bw', 'tanh_bw', 'tanhshrink_bw', 'trunc_bw',
+          'fill_bw', 'fill_zero_bw', 'hardshrink_bw', 'softshrink_bw',
+          'add_bw', 'atan2_bw', 'bias_gelu_bw', 'div_bw', 'fmod_bw', 'hypot_bw', 'ldexp_bw',
+          'logaddexp_bw', 'logaddexp2_bw', 'max_bw', 'min_bw', 'mul_bw', 'remainder_bw',
+          'rsub_bw', 'squared_difference_bw', 'sub_bw', 'xlogy_bw', 'pow_bw', 'addalpha_bw',
+          'subalpha_bw', 'addcdiv_bw', 'addcmul_bw', 'lerp_bw', 'where_bw',
+          'sum_bw', 'mean_bw', 'var_bw', 'std_bw', 'prod_bw'
         ]
       },
       complex: {
@@ -123,7 +151,7 @@ const CatalogModal = ({ isOpen, onClose }) => {
         {/* Controls */}
         <div className="flex flex-col sm:flex-row gap-4 mb-6">
           <div className="relative flex-1">
-            <Search className="absolute left-3 h-4 w-4 text-gray-400 pointer-events-none z-10" />
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400 pointer-events-none z-10" />
             <input
               type="text"
               placeholder="Search operations..."
@@ -172,9 +200,9 @@ const CatalogModal = ({ isOpen, onClose }) => {
                       <span className="text-xs text-gray-500">{filtered.length} shown</span>
                     </div>
                     
-                    <div className="bg-gray-50 rounded-lg p-3 max-h-40 overflow-y-auto">
+                    <div className="bg-gray-50 rounded-lg p-3 max-h-60 overflow-y-auto">
                       <div className="flex flex-wrap gap-1">
-                        {filtered.slice(0, 20).map((operation) => (
+                        {filtered.map((operation) => (
                           <span
                             key={operation}
                             className={`inline-flex items-center px-2 py-1 rounded text-xs font-mono transition-colors duration-200 ${
@@ -189,11 +217,6 @@ const CatalogModal = ({ isOpen, onClose }) => {
                             {operation}
                           </span>
                         ))}
-                        {filtered.length > 20 && (
-                          <span className="inline-flex items-center px-2 py-1 rounded text-xs text-gray-500 bg-gray-100">
-                            +{filtered.length - 20} more
-                          </span>
-                        )}
                       </div>
                     </div>
                   </div>
