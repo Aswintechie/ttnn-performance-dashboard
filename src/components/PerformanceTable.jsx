@@ -499,14 +499,14 @@ const PerformanceTable = ({ operations, dailyData }) => {
         </div>
       </div>
 
-      <div className="overflow-x-auto relative">
-        <table className="min-w-full relative border-collapse">
+      <div className="table-scroll-container relative">
+        <table className="min-w-full table-with-frozen-cols relative">
           <thead>
             <tr className="border-b border-gray-200">
-              <SortableHeader sortKey="operation_name" className="table-sticky-left-0 bg-gray-50 text-center border-r border-gray-200 px-4">
+              <SortableHeader sortKey="operation_name" className="table-sticky-left-0 bg-gray-50 text-center border-r border-gray-200 px-4" style={{ background: '#f9fafb' }}>
                 Operation
               </SortableHeader>
-              <th className="table-header text-center table-sticky-left-160 bg-gray-50 border-r border-gray-200 px-4">Category</th>
+              <th className="table-header text-center table-sticky-left-160 bg-gray-50 border-r border-gray-200 px-4" style={{ background: '#f9fafb' }}>Category</th>
               {dateColumns.map((dateObj, index) => (
                 <SortableHeader key={dateObj.date} sortKey={dateObj.date} className="min-w-32 text-center">
                   <div className="flex flex-col items-center">
@@ -524,10 +524,10 @@ const PerformanceTable = ({ operations, dailyData }) => {
           <tbody>
             {filteredAndSortedData.map((operation, index) => (
               <tr key={operation.operation_name} className="hover:bg-gray-50 transition-colors duration-150 group">
-                <td className="table-cell-sticky table-sticky-left-0 bg-white group-hover:bg-gray-50 font-medium text-gray-900 border-r border-gray-200 text-center transition-colors duration-150">
+                <td className="table-cell-sticky table-sticky-left-0 bg-white group-hover:bg-gray-50 font-medium text-gray-900 border-r border-gray-200 text-center transition-colors duration-150" style={{ background: 'inherit' }}>
                   {operation.operation_name}
                 </td>
-                <td className="table-cell-sticky text-center table-sticky-left-160 bg-white group-hover:bg-gray-50 border-r border-gray-200 transition-colors duration-150">
+                <td className="table-cell-sticky text-center table-sticky-left-160 bg-white group-hover:bg-gray-50 border-r border-gray-200 transition-colors duration-150" style={{ background: 'inherit' }}>
                   <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getCategoryColor(getOperationCategory(operation.operation_name))}`}>
                     {getOperationCategory(operation.operation_name)}
                   </span>
