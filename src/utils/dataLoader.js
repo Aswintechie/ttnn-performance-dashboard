@@ -14,7 +14,12 @@ export async function loadPerformanceData() {
     const dailyData = await Promise.all(
       indexData.files.map(async (file) => {
         const response = await fetch(`/${file.path}`);
-        return await response.json();
+        const data = await response.json();
+        return {
+          ...data,
+          filename: file.filename,
+          date: file.measurement_date
+        };
       })
     );
     

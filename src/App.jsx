@@ -149,12 +149,12 @@ function App() {
             <h2 className="text-2xl font-bold text-gray-900 mb-2">Detailed Performance Analysis</h2>
             <p className="text-gray-600">Day-by-day performance comparison across all operations</p>
           </div>
-          <div className="glass-card">
-            <PerformanceTable 
-              operations={processedOperations}
-              summaryStats={summaryStats}
-            />
-          </div>
+                     <div className="glass-card">
+             <PerformanceTable 
+               operations={processedOperations}
+               dailyData={data?.daily || []}
+             />
+           </div>
         </section>
       </main>
 
