@@ -163,7 +163,7 @@ function App() {
         <div className="max-w-7xl mx-auto px-6 lg:px-8 py-6">
           <div className="flex items-center justify-between">
             <div className="text-sm text-gray-500">
-              © 2025 Tenstorrent. Neural Network Performance Analytics.
+              © 2025 Aswin. Thanks to the TT-Metal community for their amazing work.
             </div>
             <div className="flex items-center space-x-4 text-sm text-gray-500">
               <span>Powered by TT-Metal</span>
