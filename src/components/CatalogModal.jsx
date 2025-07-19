@@ -120,10 +120,16 @@ const CatalogModal = ({ isOpen, onClose }) => {
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-      <div className="glass-card max-w-6xl w-full max-h-[90vh] overflow-hidden">
+    <div 
+      className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4"
+      onClick={onClose}
+    >
+      <div 
+        className="glass-card max-w-6xl w-full max-h-[90vh] flex flex-col"
+        onClick={(e) => e.stopPropagation()}
+      >
         {/* Header */}
-        <div className="flex items-center justify-between mb-6 pb-4 border-b border-gray-200">
+        <div className="flex items-center justify-between mb-6 pb-4 border-b border-gray-200 flex-shrink-0">
           <div className="flex items-center">
             <div className="relative">
               <div className="absolute inset-0 bg-blue-600 rounded-xl blur-lg opacity-30"></div>
@@ -149,7 +155,7 @@ const CatalogModal = ({ isOpen, onClose }) => {
         </div>
 
         {/* Controls */}
-        <div className="flex flex-col sm:flex-row gap-4 mb-6">
+        <div className="flex flex-col sm:flex-row gap-4 mb-6 flex-shrink-0">
           <div className="relative flex-1">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400 pointer-events-none z-10" />
             <input
@@ -175,8 +181,8 @@ const CatalogModal = ({ isOpen, onClose }) => {
           </div>
         </div>
 
-        {/* Content */}
-        <div className="overflow-y-auto max-h-[60vh]">
+        {/* Content - Flexible height that takes remaining space */}
+        <div className="flex-1 overflow-y-auto min-h-0">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             {filteredCategories.map(([key, category]) => {
               const filtered = filteredOperations(category.operations);
@@ -226,8 +232,8 @@ const CatalogModal = ({ isOpen, onClose }) => {
           </div>
         </div>
 
-        {/* Footer */}
-        <div className="mt-6 pt-4 border-t border-gray-200 text-center">
+        {/* Footer - Always visible at bottom */}
+        <div className="mt-6 pt-4 border-t border-gray-200 text-center flex-shrink-0">
           <div className="flex items-center justify-center space-x-6 text-sm text-gray-500">
             <div className="flex items-center">
               <Zap className="h-4 w-4 mr-1 text-blue-500" />
