@@ -148,8 +148,8 @@ export const operationsCatalog = {
     },
     "reduction": {
       "description": "Reduction operations",
-      "operations": ["argmax", "max", "min", "mean", "sum", "prod", "var", "std", "cumsum", "cumprod"],
-      "total_count": 10
+      "operations": ["max", "min", "mean", "sum", "prod", "var", "std", "cumsum", "cumprod"],
+      "total_count": 9
     },
     "backward": {
       "description": "Backward pass operations for training",
