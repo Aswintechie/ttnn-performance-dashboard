@@ -2,15 +2,15 @@
 
 ## Summary
 - **Total Categories**: 6  
-- **Total Operations**: **289**
+- **Total Operations**: **288**
 - **Unary Operations**: 98 operations
 - **Binary Operations**: 64 operations
 - **Ternary Operations**: 5 operations
-- **Reduction Operations**: 10 operations
+- **Reduction Operations**: 9 operations
 - **Backward Operations**: 80 operations
 - **Complex Operations**: 8 operations
 
-**Test Coverage**: 265/289 operations (**91.7%**)
+**Test Coverage**: 264/288 operations (**91.7%**)
 
 ---
 
@@ -137,9 +137,9 @@ round_binary, clip_binary
 addcdiv, addcmul, where, mac, lerp
 ```
 
-### 4. **Reduction Operations** (10 operations)
+### 4. **Reduction Operations** (9 operations)
 ```
-argmax, max, min, mean, sum, prod, var, std, cumsum, cumprod
+max, min, mean, sum, prod, var, std, cumsum, cumprod
 ```
 
 ### 5. **Backward Operations** (80 operations)
@@ -223,7 +223,7 @@ complex_tensor, real, imag, angle, conj, polar
 - **Mathematical Functions**: 35 operations (trig, exp, log, etc.)
 - **Comparison Operations**: 12 operations (gt, lt, eq, etc.)
 - **Logical Operations**: 8 operations (and, or, xor, not)
-- **Reduction Operations**: 10 operations (sum, mean, max, etc.)
+- **Reduction Operations**: 9 operations (sum, mean, max, etc.)
 - **Backward Operations**: 80 operations (training support)
 - **Inplace Operations**: 24 operations (memory-efficient variants)
 - **Complex Operations**: 8 operations (complex number support)
@@ -247,5 +247,5 @@ complex_tensor, real, imag, angle, conj, polar
 
 ---
 
-**Total Operations: 289** ✅  
+**Total Operations: 288** ✅  
 **Test Coverage: 91.7%** 🎯 

@@ -84,7 +84,7 @@ npm run lint
 
 ## 📊 **Operations Catalog**
 
-The dashboard tracks **289 TTNN eltwise operations** across 6 main categories:
+The dashboard tracks **288 TTNN eltwise operations** across 6 main categories:
 
 ### 🔥 **High Priority Operations** (23 operations)
 - **Arithmetic**: `add`, `subtract`, `multiply`, `divide`
@@ -97,11 +97,11 @@ The dashboard tracks **289 TTNN eltwise operations** across 6 main categories:
 - **Unary Operations**: 98 operations
 - **Binary Operations**: 64 operations  
 - **Ternary Operations**: 5 operations
-- **Reduction Operations**: 10 operations
+- **Reduction Operations**: 9 operations
 - **Backward Operations**: 80 operations
 - **Complex Operations**: 8 operations
 
-**Test Coverage**: 265/289 operations (**91.7%**)
+**Test Coverage**: 264/288 operations (**91.7%**)
 
 ---
 
