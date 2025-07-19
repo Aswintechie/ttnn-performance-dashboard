@@ -36,6 +36,10 @@
   .table-cell {
     @apply py-4 px-6 border-b border-gray-200 text-sm text-gray-900;
   }
+
+  .table-cell-sticky {
+    @apply py-4 px-4 border-b border-gray-200 text-sm text-gray-900;
+  }
   
   .metric-card {
     @apply bg-gradient-to-br from-white to-gray-50 rounded-xl shadow-sm border border-gray-200 p-6 hover:shadow-md transition-shadow duration-200;
@@ -46,15 +50,18 @@
     position: sticky !important;
     left: 0 !important;
     z-index: 30 !important;
-    width: 200px !important;
-    box-shadow: 2px 0 4px rgba(0, 0, 0, 0.1) !important;
+    min-width: 160px !important;
+    max-width: 160px !important;
+    width: 160px !important;
   }
   
-  .table-sticky-left-200 {
+  .table-sticky-left-160 {
     position: sticky !important;
-    left: 200px !important;
+    left: 160px !important;
     z-index: 20 !important;
-    width: 150px !important;
-    box-shadow: 2px 0 4px rgba(0, 0, 0, 0.1) !important;
+    min-width: 140px !important;
+    max-width: 140px !important;
+    width: 140px !important;
+    box-shadow: 2px 0 4px rgba(0, 0, 0, 0.05) !important;
   }
 } 
