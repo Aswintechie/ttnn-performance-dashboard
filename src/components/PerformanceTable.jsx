@@ -182,11 +182,13 @@ const PerformanceTable = ({ operations, dailyData }) => {
       new Date(a.metadata.measurement_date) - new Date(b.metadata.measurement_date)
     );
 
-    // Get all unique operations
+    // Get all unique operations (exclude argmax as it's been removed)
     const allOperations = new Set();
     sortedDailyData.forEach(day => {
       day.results.forEach(result => {
-        allOperations.add(result.operation_name);
+        if (result.operation_name !== 'argmax') {
+          allOperations.add(result.operation_name);
+        }
       });
     });
 
