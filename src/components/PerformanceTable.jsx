@@ -563,16 +563,6 @@ const PerformanceTable = ({ operations, dailyData }) => {
                              {formatValue(dayData.duration_ns, selectedUnit)}{selectedUnit}
                            </span>
                            
-                           {/* Show change from previous day */}
-                           {!isFirstColumn && previousValue && (
-                             <div className={`text-xs font-medium ${
-                               previousChangePercent < -2 ? 'text-green-600' : 
-                               previousChangePercent > 2 ? 'text-red-600' : 'text-gray-500'
-                             }`}>
-                               {previousChangePercent > 0 ? '+' : ''}{previousChangePercent.toFixed(1)}%
-                             </div>
-                           )}
-                           
                            {/* Show day-to-day trend arrow */}
                            {change && change.trend !== 'stable' && (
                              <div className={`flex items-center text-xs ${
