@@ -290,6 +290,16 @@ const PerformanceTable = ({ operations, dailyData }) => {
     return filtered;
   }, [processedData, searchTerm, sortConfig, performanceSort, dateColumns, selectedCategories]);
 
+  // Auto-scroll to rightmost column (latest results) on data load
+  useEffect(() => {
+    if (tableScrollRef.current && dateColumns.length > 0) {
+      // Small delay to ensure table is rendered
+      setTimeout(() => {
+        tableScrollRef.current.scrollLeft = tableScrollRef.current.scrollWidth;
+      }, 100);
+    }
+  }, [dateColumns.length, filteredAndSortedData.length]);
+
   const handleSort = (key) => {
     setPerformanceSort('none'); // Reset performance sort when clicking column headers
     setSortConfig(prevConfig => ({
