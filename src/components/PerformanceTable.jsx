@@ -13,6 +13,7 @@ const PerformanceTable = ({ operations, dailyData }) => {
   ]);
   const [showFilters, setShowFilters] = useState(false);
   const filterRef = useRef(null);
+  const tableScrollRef = useRef(null);
 
   // Close filter dropdown when clicking outside
   useEffect(() => {
@@ -27,6 +28,16 @@ const PerformanceTable = ({ operations, dailyData }) => {
       document.removeEventListener('mousedown', handleClickOutside);
     };
   }, []);
+
+  // Auto-scroll to rightmost column (latest results) on data load
+  useEffect(() => {
+    if (tableScrollRef.current && dateColumns.length > 0) {
+      // Small delay to ensure table is rendered
+      setTimeout(() => {
+        tableScrollRef.current.scrollLeft = tableScrollRef.current.scrollWidth;
+      }, 100);
+    }
+  }, [dateColumns.length, filteredAndSortedData.length]);
 
   const convertFromNanoseconds = (nanoseconds, unit) => {
     switch (unit) {
@@ -506,7 +517,7 @@ const PerformanceTable = ({ operations, dailyData }) => {
         </div>
       </div>
 
-      <div className="overflow-x-auto relative">
+      <div className="overflow-x-auto relative" ref={tableScrollRef}>
         <table className="min-w-full relative border-collapse">
           <thead>
             <tr className="border-b border-gray-200">
