@@ -3,9 +3,9 @@ export const operationsCatalog = {
     "title": "Tenstorrent TT-Metal Eltwise Operations Catalog",
     "description": "Comprehensive list of all TT-Metal element-wise operations for performance tracking",
     "total_categories": 6,
-    "total_operations": 289,
+    "total_operations": 288,
     "inplace_operations_included": 24,
-    "test_coverage": "265/289 operations (91.7%)"
+    "test_coverage": "264/288 operations (91.7%)"
   },
   "priority_classification": {
     "high_priority": {
@@ -233,6 +233,6 @@ export const operationsCatalog = {
   "validation": {
     "method": "Direct TT-Metal TTNN attribute checking and test validation",
     "environment": "ttcd activated tt-metal environment",
-    "test_coverage": "265/289 operations (91.7%)"
+    "test_coverage": "264/288 operations (91.7%)"
   }
 }; 
