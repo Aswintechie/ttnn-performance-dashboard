@@ -45,6 +45,31 @@
     @apply bg-gradient-to-br from-white to-gray-50 rounded-xl shadow-sm border border-gray-200 p-6 hover:shadow-md transition-shadow duration-200;
   }
 
+  /* Custom color gradients for performance indicators */
+  .bg-green-25 {
+    background-color: #f0fdf4;
+  }
+  
+  .bg-green-150 {
+    background-color: #bbf7d0;
+  }
+  
+  .bg-red-25 {
+    background-color: #fef2f2;
+  }
+  
+  .bg-red-150 {
+    background-color: #fecaca;
+  }
+  
+  .text-green-600 {
+    color: #16a34a;
+  }
+  
+  .text-red-600 {
+    color: #dc2626;
+  }
+
   /* Sticky table columns */
   .table-sticky-left-0 {
     position: sticky !important;

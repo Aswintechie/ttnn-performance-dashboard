@@ -54,21 +54,28 @@ const PerformanceTable = ({ operations, dailyData }) => {
     
     if (!baselineValue || !currentValue) return 'bg-white';
     
-    // Calculate percentage change from baseline
+    // Calculate percentage change from baseline (cumulative change)
     const changePercent = ((currentValue - baselineValue) / baselineValue) * 100;
     
-    // Performance improved (faster)
-    if (changePercent <= -15) return 'bg-green-200 text-green-900';      // Significant improvement
-    if (changePercent <= -8) return 'bg-green-100 text-green-800';       // Good improvement  
-    if (changePercent <= -3) return 'bg-green-50 text-green-700';        // Slight improvement
+    // More granular color gradients for cumulative changes from baseline
+    // Performance improved (faster = negative change)
+    if (changePercent <= -25) return 'bg-green-300 text-green-900';      // >25% improvement
+    if (changePercent <= -20) return 'bg-green-200 text-green-900';      // 20-25% improvement
+    if (changePercent <= -15) return 'bg-green-150 text-green-800';      // 15-20% improvement  
+    if (changePercent <= -10) return 'bg-green-100 text-green-800';      // 10-15% improvement
+    if (changePercent <= -5) return 'bg-green-50 text-green-700';        // 5-10% improvement
+    if (changePercent <= -2) return 'bg-green-25 text-green-600';        // 2-5% improvement
     
-    // Performance stable (within ±3%)
-    if (changePercent >= -3 && changePercent <= 3) return 'bg-white';
+    // Performance stable (within ±2%)
+    if (changePercent >= -2 && changePercent <= 2) return 'bg-white';
     
-    // Performance degraded (slower)
-    if (changePercent <= 8) return 'bg-red-50 text-red-700';             // Slight degradation
-    if (changePercent <= 15) return 'bg-red-100 text-red-800';           // Noticeable degradation
-         return 'bg-red-200 text-red-900';                                     // Significant degradation
+    // Performance degraded (slower = positive change)
+    if (changePercent <= 5) return 'bg-red-25 text-red-600';             // 2-5% degradation
+    if (changePercent <= 10) return 'bg-red-50 text-red-700';            // 5-10% degradation
+    if (changePercent <= 15) return 'bg-red-100 text-red-800';           // 10-15% degradation
+    if (changePercent <= 20) return 'bg-red-150 text-red-800';           // 15-20% degradation
+    if (changePercent <= 25) return 'bg-red-200 text-red-900';           // 20-25% degradation
+    return 'bg-red-300 text-red-900';                                    // >25% degradation
    };
 
   const getOperationCategory = (operationName) => {
@@ -545,6 +552,10 @@ const PerformanceTable = ({ operations, dailyData }) => {
                    const isFirstColumn = dateIndex === 0;
                    const colorClass = dayData ? getPerformanceColor(dayData.duration_ns, baselineValue, isFirstColumn) : '';
                    
+                   // Calculate cumulative change from baseline for display
+                   const baselineChangePercent = !isFirstColumn && baselineValue && dayData ? 
+                     ((dayData.duration_ns - baselineValue) / baselineValue * 100) : 0;
+                   
                    return (
                      <td key={dateObj.date} className="table-cell text-center relative">
                        {dayData ? (
@@ -552,7 +563,19 @@ const PerformanceTable = ({ operations, dailyData }) => {
                            <span className={`font-mono text-sm font-medium px-2 py-1 rounded-md ${colorClass}`}>
                              {formatValue(dayData.duration_ns, selectedUnit)}{selectedUnit}
                            </span>
-                                                     {change && change.trend !== 'stable' && (
+                           
+                           {/* Show cumulative change from baseline */}
+                           {!isFirstColumn && baselineValue && (
+                             <div className={`text-xs font-medium ${
+                               baselineChangePercent < -2 ? 'text-green-600' : 
+                               baselineChangePercent > 2 ? 'text-red-600' : 'text-gray-500'
+                             }`}>
+                               {baselineChangePercent > 0 ? '+' : ''}{baselineChangePercent.toFixed(1)}%
+                             </div>
+                           )}
+                           
+                           {/* Show day-to-day trend arrow */}
+                           {change && change.trend !== 'stable' && (
                              <div className={`flex items-center text-xs ${
                                change.trend === 'better' ? 'text-green-600' : 'text-red-600'
                              }`}>
