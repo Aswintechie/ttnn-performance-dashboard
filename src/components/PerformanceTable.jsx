@@ -1,5 +1,5 @@
 import React, { useState, useMemo, useRef, useEffect } from 'react';
-import { Search, ChevronUp, ChevronDown, Filter, BarChart3, TrendingUp, TrendingDown, Minus } from 'lucide-react';
+import { Search, ChevronUp, ChevronDown, Filter, BarChart3, TrendingUp, TrendingDown, Minus, Eye, EyeOff } from 'lucide-react';
 import { operationsCatalog } from '../utils/operationsCatalog.js';
 
 const PerformanceTable = ({ operations, dailyData }) => {
@@ -12,6 +12,7 @@ const PerformanceTable = ({ operations, dailyData }) => {
     'Ternary', 'Reduction', 'Complex'
   ]);
   const [showFilters, setShowFilters] = useState(false);
+  const [showAllColumns, setShowAllColumns] = useState(false); // New state for showing all columns
   const filterRef = useRef(null);
   const tableScrollRef = useRef(null);
 
@@ -242,6 +243,60 @@ const PerformanceTable = ({ operations, dailyData }) => {
       }));
   }, [dailyData]);
 
+  // Determine which columns have significant performance changes
+  const significantColumns = useMemo(() => {
+    if (!processedData || dateColumns.length < 2) return dateColumns;
+    
+    const significantDates = new Set();
+    
+    // Always include the first column (baseline)
+    if (dateColumns.length > 0) {
+      significantDates.add(dateColumns[0].date);
+    }
+    
+    // Check each subsequent column for significant changes
+    for (let i = 1; i < dateColumns.length; i++) {
+      const currentDate = dateColumns[i].date;
+      const previousDate = dateColumns[i - 1].date;
+      
+      let significantOperations = 0;
+      let totalOperations = 0;
+      
+      processedData.forEach(operation => {
+        const currentPerf = operation.dailyPerformance[currentDate];
+        const previousPerf = operation.dailyPerformance[previousDate];
+        
+        if (currentPerf && previousPerf) {
+          const changePercent = ((currentPerf.duration_ns - previousPerf.duration_ns) / previousPerf.duration_ns) * 100;
+          totalOperations++;
+          
+          // Consider significant if >5% improvement or >10% degradation
+          if (changePercent <= -5 || changePercent >= 10) {
+            significantOperations++;
+          }
+        }
+      });
+      
+      // Include column if at least 10% of operations have significant changes
+      const significanceThreshold = Math.max(1, Math.floor(totalOperations * 0.1));
+      if (significantOperations >= significanceThreshold) {
+        significantDates.add(currentDate);
+      }
+    }
+    
+    // Always include the last column (latest results)
+    if (dateColumns.length > 0) {
+      significantDates.add(dateColumns[dateColumns.length - 1].date);
+    }
+    
+    return dateColumns.filter(col => significantDates.has(col.date));
+  }, [processedData, dateColumns]);
+
+  // Use filtered or all columns based on toggle
+  const displayedDateColumns = useMemo(() => {
+    return showAllColumns ? dateColumns : significantColumns;
+  }, [showAllColumns, dateColumns, significantColumns]);
+
   const filteredAndSortedData = useMemo(() => {
     let filtered = processedData.filter(op => {
       const matchesSearch = op.operation_name.toLowerCase().includes(searchTerm.toLowerCase());
@@ -292,13 +347,13 @@ const PerformanceTable = ({ operations, dailyData }) => {
 
   // Auto-scroll to rightmost column (latest results) on data load
   useEffect(() => {
-    if (tableScrollRef.current && dateColumns.length > 0) {
+    if (tableScrollRef.current && displayedDateColumns.length > 0) {
       // Small delay to ensure table is rendered
       setTimeout(() => {
         tableScrollRef.current.scrollLeft = tableScrollRef.current.scrollWidth;
       }, 100);
     }
-  }, [dateColumns.length, filteredAndSortedData.length]);
+  }, [displayedDateColumns.length, filteredAndSortedData.length]);
 
   const handleSort = (key) => {
     setPerformanceSort('none'); // Reset performance sort when clicking column headers
@@ -369,29 +424,32 @@ const PerformanceTable = ({ operations, dailyData }) => {
           <h2 className="text-lg font-semibold text-gray-900 mb-1">Daily Eltwise Performance Comparison</h2>
           <p className="text-sm text-gray-500">
             {filteredAndSortedData.length} operations 
-            {selectedCategories.length > 0 && ` (${selectedCategories.join(', ')} categories)`} • {dateColumns.length} days of data
+            {selectedCategories.length > 0 && ` (${selectedCategories.join(', ')} categories)`} • {displayedDateColumns.length}{!showAllColumns && displayedDateColumns.length < dateColumns.length ? ` of ${dateColumns.length}` : ''} days of data
           </p>
         </div>
         
         <div className="flex flex-col lg:flex-row gap-3 mt-4 sm:mt-0">
-          <div className="flex flex-col sm:flex-row gap-3">
-            <div className="relative flex items-center">
-              <Search className="absolute left-3 h-4 w-4 text-gray-400 pointer-events-none z-10" />
-              <input
-                type="text"
-                placeholder="Search operations..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent w-full sm:w-64"
-              />
-            </div>
-            
-            <div className="flex border border-gray-300 rounded-lg overflow-hidden min-w-0 shrink-0">
+          {/* Search Input */}
+          <div className="relative flex items-center">
+            <Search className="absolute left-3 h-4 w-4 text-gray-400 pointer-events-none z-10" />
+            <input
+              type="text"
+              placeholder="Search operations..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent w-full sm:w-64 h-10"
+            />
+          </div>
+          
+          {/* Controls Row */}
+          <div className="flex flex-wrap gap-3 items-center">
+            {/* Unit Selector */}
+            <div className="flex border border-gray-300 rounded-lg overflow-hidden">
               {['ns', 'μs', 'ms', 's'].map((unit) => (
                 <button
                   key={unit}
                   onClick={() => setSelectedUnit(unit)}
-                  className={`px-3 py-2 text-sm font-medium transition-colors duration-200 flex-shrink-0 ${
+                  className={`px-3 py-2 text-sm font-medium transition-colors duration-200 h-10 ${
                     selectedUnit === unit
                       ? 'bg-primary-600 text-white'
                       : 'bg-white text-gray-700 hover:bg-gray-50'
@@ -402,10 +460,31 @@ const PerformanceTable = ({ operations, dailyData }) => {
               ))}
             </div>
             
+            {/* Show All Columns Toggle */}
+            <div className="flex items-center space-x-2 px-3 py-2 border border-gray-300 rounded-lg bg-white hover:bg-gray-50 h-10">
+              <input
+                type="checkbox"
+                id="showAllColumns"
+                checked={showAllColumns}
+                onChange={(e) => setShowAllColumns(e.target.checked)}
+                className="rounded border-gray-300 text-primary-600 focus:ring-primary-500"
+              />
+              <label htmlFor="showAllColumns" className="flex items-center text-sm font-medium text-gray-700 cursor-pointer whitespace-nowrap">
+                {showAllColumns ? <Eye className="h-4 w-4 mr-1" /> : <EyeOff className="h-4 w-4 mr-1" />}
+                Show All Days
+              </label>
+              {!showAllColumns && significantColumns.length < dateColumns.length && (
+                <span className="text-xs text-gray-500 whitespace-nowrap">
+                  ({dateColumns.length - significantColumns.length} hidden)
+                </span>
+              )}
+            </div>
+            
+            {/* Filter Dropdown */}
             <div className="relative" ref={filterRef}>
               <button
                 onClick={() => setShowFilters(!showFilters)}
-                className="flex items-center px-4 py-2 border border-gray-300 rounded-lg bg-white hover:bg-gray-50 text-sm font-medium text-gray-700"
+                className="flex items-center px-4 py-2 border border-gray-300 rounded-lg bg-white hover:bg-gray-50 text-sm font-medium text-gray-700 h-10"
               >
                 <Filter className="h-4 w-4 mr-2" />
                 Filter Categories
@@ -477,16 +556,15 @@ const PerformanceTable = ({ operations, dailyData }) => {
                 </div>
               )}
             </div>
-            
-
           </div>
           
-          <div className="flex flex-col sm:flex-row gap-3">
-            <span className="text-sm font-medium text-gray-700 self-center">Performance Sort:</span>
-            <div className="flex border border-gray-300 rounded-lg overflow-hidden">
+          {/* Performance Sort Section */}
+          <div className="flex flex-col sm:flex-row gap-3 items-start sm:items-center">
+            <span className="text-sm font-medium text-gray-700">Performance Sort:</span>
+            <div className="flex border border-gray-300 rounded-lg">
               <button
                 onClick={() => handlePerformanceSort('none')}
-                className={`px-3 py-2 text-sm font-medium transition-colors duration-200 ${
+                className={`px-4 py-2 text-sm font-medium transition-colors duration-200 flex items-center justify-center whitespace-nowrap rounded-l-lg ${
                   performanceSort === 'none'
                     ? 'bg-primary-600 text-white'
                     : 'bg-white text-gray-700 hover:bg-gray-50'
@@ -496,23 +574,23 @@ const PerformanceTable = ({ operations, dailyData }) => {
               </button>
               <button
                 onClick={() => handlePerformanceSort('most-improved')}
-                className={`px-3 py-2 text-sm font-medium transition-colors duration-200 ${
+                className={`px-4 py-2 text-sm font-medium transition-colors duration-200 flex items-center justify-center whitespace-nowrap border-l border-gray-300 ${
                   performanceSort === 'most-improved'
                     ? 'bg-green-600 text-white'
                     : 'bg-white text-gray-700 hover:bg-gray-50'
                 }`}
               >
-                Most Improved
+                Improved
               </button>
               <button
                 onClick={() => handlePerformanceSort('most-degraded')}
-                className={`px-3 py-2 text-sm font-medium transition-colors duration-200 ${
+                className={`px-4 py-2 text-sm font-medium transition-colors duration-200 flex items-center justify-center whitespace-nowrap border-l border-gray-300 rounded-r-lg ${
                   performanceSort === 'most-degraded'
                     ? 'bg-red-600 text-white'
                     : 'bg-white text-gray-700 hover:bg-gray-50'
                 }`}
               >
-                Most Degraded
+                Degraded
               </button>
             </div>
           </div>
@@ -527,11 +605,11 @@ const PerformanceTable = ({ operations, dailyData }) => {
                 Operation
               </SortableHeader>
               <th className="table-header text-center table-sticky-left-160 bg-gray-50 border-r border-gray-200 px-4 z-30">Category</th>
-              {dateColumns.map((dateObj, index) => (
+              {displayedDateColumns.map((dateObj, index) => (
                 <SortableHeader key={dateObj.date} sortKey={dateObj.date} className="min-w-32 text-center">
                   <div className="flex flex-col items-center">
                     <span>{dateObj.date}</span>
-                    {index === dateColumns.length - 1 ? (
+                    {index === displayedDateColumns.length - 1 ? (
                       <span className="text-xs text-primary-600 font-normal">Latest</span>
                     ) : (
                       <span className="text-xs text-primary-600 font-mono">{dateObj.commitId}</span>
@@ -552,9 +630,9 @@ const PerformanceTable = ({ operations, dailyData }) => {
                     {getOperationCategory(operation.operation_name)}
                   </span>
                 </td>
-                {dateColumns.map((dateObj, dateIndex) => {
+                {displayedDateColumns.map((dateObj, dateIndex) => {
                    const dayData = operation.dailyPerformance[dateObj.date];
-                   const previousDateObj = dateIndex > 0 ? dateColumns[dateIndex - 1] : null;
+                   const previousDateObj = dateIndex > 0 ? displayedDateColumns[dateIndex - 1] : null;
                    const previousData = previousDateObj ? operation.dailyPerformance[previousDateObj.date] : null;
                    const change = getPerformanceChange(dayData, previousData);
                    
@@ -589,145 +667,145 @@ const PerformanceTable = ({ operations, dailyData }) => {
                                {Math.abs(parseFloat(change.percentage))}%
                              </div>
                            )}
-                          {change && change.trend === 'stable' && (
-                            <div className="flex items-center text-xs text-gray-400">
-                              <Minus className="h-3 w-3" />
-                            </div>
-                          )}
-                        </div>
-                      ) : (
-                        <span className="text-gray-400 text-sm">—</span>
-                      )}
-                    </td>
-                  );
-                })}
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
+                           {change && change.trend === 'stable' && (
+                             <div className="flex items-center text-xs text-gray-400">
+                               <Minus className="h-3 w-3" />
+                             </div>
+                           )}
+                         </div>
+                       ) : (
+                         <span className="text-gray-400 text-sm">—</span>
+                       )}
+                     </td>
+                   );
+                 })}
+               </tr>
+             ))}
+           </tbody>
+         </table>
+       </div>
 
-      {filteredAndSortedData.length === 0 && (
-        <div className="text-center py-8">
-          <Search className="h-8 w-8 text-gray-400 mx-auto mb-2" />
-          <p className="text-gray-500">No operations match your search criteria.</p>
-        </div>
-      )}
+       {filteredAndSortedData.length === 0 && (
+         <div className="text-center py-8">
+           <Search className="h-8 w-8 text-gray-400 mx-auto mb-2" />
+           <p className="text-gray-500">No operations match your search criteria.</p>
+         </div>
+       )}
 
-      <div className="mt-4 border-t pt-4 space-y-3">
-        <div className="flex items-center justify-between text-xs text-gray-500">
-          <div className="flex items-center space-x-4">
-            <div className="flex items-center">
-              <TrendingUp className="h-3 w-3 text-green-600 mr-1" />
-              <span>Performance improved ({'>'}5% faster)</span>
-            </div>
-            <div className="flex items-center">
-              <TrendingDown className="h-3 w-3 text-red-600 mr-1" />
-              <span>Performance degraded ({'>'}5% slower)</span>
-            </div>
-            <div className="flex items-center">
-              <Minus className="h-3 w-3 text-gray-400 mr-1" />
-              <span>Stable (±5%)</span>
-            </div>
-          </div>
-          <div>
-            All times shown in {selectedUnit === 'μs' ? 'microseconds' : selectedUnit === 'ns' ? 'nanoseconds' : selectedUnit === 'ms' ? 'milliseconds' : 'seconds'} • Click column headers to sort by values • Use Performance Sort for trend analysis • Filter by category
-          </div>
-        </div>
-        
-        <div className="flex items-center text-xs text-gray-500">
-          <span className="mr-3">Performance colors (relative to first column baseline):</span>
-          <div className="flex items-center space-x-2">
-            <div className="flex items-center">
-              <div className="w-4 h-3 bg-green-200 rounded mr-1"></div>
-              <span>{'>'}15% faster</span>
-            </div>
-            <div className="flex items-center">
-              <div className="w-4 h-3 bg-green-100 rounded mr-1"></div>
-              <span>8-15% faster</span>
-            </div>
-            <div className="flex items-center">
-              <div className="w-4 h-3 bg-green-50 rounded mr-1"></div>
-              <span>3-8% faster</span>
-            </div>
-            <div className="flex items-center">
-              <div className="w-4 h-3 bg-white border border-gray-200 rounded mr-1"></div>
-              <span>±3% (stable)</span>
-            </div>
-            <div className="flex items-center">
-              <div className="w-4 h-3 bg-red-50 rounded mr-1"></div>
-              <span>3-8% slower</span>
-            </div>
-            <div className="flex items-center">
-              <div className="w-4 h-3 bg-red-100 rounded mr-1"></div>
-              <span>8-15% slower</span>
-            </div>
-            <div className="flex items-center">
-              <div className="w-4 h-3 bg-red-200 rounded mr-1"></div>
-              <span>{'>'}15% slower</span>
-            </div>
-          </div>
-        </div>
-        
-        <div className="space-y-2 text-xs text-gray-500">
-          <div className="flex items-center">
-            <span className="mr-3 font-medium">Forward Operations:</span>
-            <div className="flex flex-wrap items-center gap-2">
-              <div className="flex items-center">
-                <div className="w-3 h-3 bg-blue-100 rounded mr-1"></div>
-                <span>Unary</span>
-              </div>
-              <div className="flex items-center">
-                <div className="w-3 h-3 bg-green-100 rounded mr-1"></div>
-                <span>Binary Arith</span>
-              </div>
-              <div className="flex items-center">
-                <div className="w-3 h-3 bg-green-200 rounded mr-1"></div>
-                <span>Binary Comp</span>
-              </div>
-              <div className="flex items-center">
-                <div className="w-3 h-3 bg-green-300 rounded mr-1"></div>
-                <span>Binary Logic</span>
-              </div>
-              <div className="flex items-center">
-                <div className="w-3 h-3 bg-purple-100 rounded mr-1"></div>
-                <span>Ternary</span>
-              </div>
-              <div className="flex items-center">
-                <div className="w-3 h-3 bg-orange-100 rounded mr-1"></div>
-                <span>Reduction</span>
-              </div>
-              <div className="flex items-center">
-                <div className="w-3 h-3 bg-pink-100 rounded mr-1"></div>
-                <span>Complex</span>
-              </div>
-            </div>
-          </div>
-          <div className="flex items-center">
-            <span className="mr-3 font-medium">Backward Operations:</span>
-            <div className="flex flex-wrap items-center gap-2">
-              <div className="flex items-center">
-                <div className="w-3 h-3 bg-gray-100 rounded mr-1"></div>
-                <span>Unary BW</span>
-              </div>
-              <div className="flex items-center">
-                <div className="w-3 h-3 bg-gray-200 rounded mr-1"></div>
-                <span>Binary BW</span>
-              </div>
-              <div className="flex items-center">
-                <div className="w-3 h-3 bg-gray-300 rounded mr-1"></div>
-                <span>Ternary BW</span>
-              </div>
-              <div className="flex items-center">
-                <div className="w-3 h-3 bg-gray-400 rounded mr-1"></div>
-                <span>Reduction BW</span>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-};
+       <div className="mt-4 border-t pt-4 space-y-3">
+         <div className="flex items-center justify-between text-xs text-gray-500">
+           <div className="flex items-center space-x-4">
+             <div className="flex items-center">
+               <TrendingUp className="h-3 w-3 text-green-600 mr-1" />
+               <span>Performance improved ({'>'}5% faster)</span>
+             </div>
+             <div className="flex items-center">
+               <TrendingDown className="h-3 w-3 text-red-600 mr-1" />
+               <span>Performance degraded ({'>'}5% slower)</span>
+             </div>
+             <div className="flex items-center">
+               <Minus className="h-3 w-3 text-gray-400 mr-1" />
+               <span>Stable (±5%)</span>
+             </div>
+           </div>
+           <div>
+             All times shown in {selectedUnit === 'μs' ? 'microseconds' : selectedUnit === 'ns' ? 'nanoseconds' : selectedUnit === 'ms' ? 'milliseconds' : 'seconds'} • Click column headers to sort by values • Use Performance Sort for trend analysis • Filter by category
+           </div>
+         </div>
+         
+         <div className="flex items-center text-xs text-gray-500">
+           <span className="mr-3">Performance colors (relative to first column baseline):</span>
+           <div className="flex items-center space-x-2">
+             <div className="flex items-center">
+               <div className="w-4 h-3 bg-green-200 rounded mr-1"></div>
+               <span>{'>'}15% faster</span>
+             </div>
+             <div className="flex items-center">
+               <div className="w-4 h-3 bg-green-100 rounded mr-1"></div>
+               <span>8-15% faster</span>
+             </div>
+             <div className="flex items-center">
+               <div className="w-4 h-3 bg-green-50 rounded mr-1"></div>
+               <span>3-8% faster</span>
+             </div>
+             <div className="flex items-center">
+               <div className="w-4 h-3 bg-white border border-gray-200 rounded mr-1"></div>
+               <span>±3% (stable)</span>
+             </div>
+             <div className="flex items-center">
+               <div className="w-4 h-3 bg-red-50 rounded mr-1"></div>
+               <span>3-8% slower</span>
+             </div>
+             <div className="flex items-center">
+               <div className="w-4 h-3 bg-red-100 rounded mr-1"></div>
+               <span>8-15% slower</span>
+             </div>
+             <div className="flex items-center">
+               <div className="w-4 h-3 bg-red-200 rounded mr-1"></div>
+               <span>{'>'}15% slower</span>
+             </div>
+           </div>
+         </div>
+         
+         <div className="space-y-2 text-xs text-gray-500">
+           <div className="flex items-center">
+             <span className="mr-3 font-medium">Forward Operations:</span>
+             <div className="flex flex-wrap items-center gap-2">
+               <div className="flex items-center">
+                 <div className="w-3 h-3 bg-blue-100 rounded mr-1"></div>
+                 <span>Unary</span>
+               </div>
+               <div className="flex items-center">
+                 <div className="w-3 h-3 bg-green-100 rounded mr-1"></div>
+                 <span>Binary Arith</span>
+               </div>
+               <div className="flex items-center">
+                 <div className="w-3 h-3 bg-green-200 rounded mr-1"></div>
+                 <span>Binary Comp</span>
+               </div>
+               <div className="flex items-center">
+                 <div className="w-3 h-3 bg-green-300 rounded mr-1"></div>
+                 <span>Binary Logic</span>
+               </div>
+               <div className="flex items-center">
+                 <div className="w-3 h-3 bg-purple-100 rounded mr-1"></div>
+                 <span>Ternary</span>
+               </div>
+               <div className="flex items-center">
+                 <div className="w-3 h-3 bg-orange-100 rounded mr-1"></div>
+                 <span>Reduction</span>
+               </div>
+               <div className="flex items-center">
+                 <div className="w-3 h-3 bg-pink-100 rounded mr-1"></div>
+                 <span>Complex</span>
+               </div>
+             </div>
+           </div>
+           <div className="flex items-center">
+             <span className="mr-3 font-medium">Backward Operations:</span>
+             <div className="flex flex-wrap items-center gap-2">
+               <div className="flex items-center">
+                 <div className="w-3 h-3 bg-gray-100 rounded mr-1"></div>
+                 <span>Unary BW</span>
+               </div>
+               <div className="flex items-center">
+                 <div className="w-3 h-3 bg-gray-200 rounded mr-1"></div>
+                 <span>Binary BW</span>
+               </div>
+               <div className="flex items-center">
+                 <div className="w-3 h-3 bg-gray-300 rounded mr-1"></div>
+                 <span>Ternary BW</span>
+               </div>
+               <div className="flex items-center">
+                 <div className="w-3 h-3 bg-gray-400 rounded mr-1"></div>
+                 <span>Reduction BW</span>
+               </div>
+             </div>
+           </div>
+         </div>
+       </div>
+     </div>
+   );
+ };
 
-export default PerformanceTable; 
+ export default PerformanceTable;
