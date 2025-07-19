@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { BarChart3, RefreshCw, AlertCircle } from 'lucide-react';
+import { BarChart3, RefreshCw, AlertCircle, Zap, Activity, TrendingUp } from 'lucide-react';
 import OverviewCards from './components/OverviewCards';
 import PerformanceTable from './components/PerformanceTable';
 import { 
@@ -45,28 +45,41 @@ function App() {
   const dailyComparison = data ? compareDailyData(data.daily) : null;
 
   const LoadingState = () => (
-    <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100 flex items-center justify-center">
       <div className="text-center">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600 mx-auto mb-4"></div>
-        <h3 className="text-lg font-medium text-gray-900 mb-2">Loading Performance Data</h3>
-        <p className="text-gray-500">Please wait while we fetch the latest results...</p>
+        <div className="relative">
+          <div className="animate-spin rounded-full h-16 w-16 border-b-4 border-blue-600 mx-auto mb-6"></div>
+          <div className="absolute inset-0 rounded-full h-16 w-16 border-t-4 border-indigo-400 animate-ping mx-auto"></div>
+        </div>
+        <div className="glass-card max-w-md">
+          <h3 className="text-xl font-bold text-gray-900 mb-3 flex items-center justify-center">
+            <Activity className="h-6 w-6 mr-2 text-blue-600" />
+            Loading Performance Data
+          </h3>
+          <p className="text-gray-600">Fetching the latest TTNN operation results...</p>
+          <div className="mt-4 bg-gray-200 rounded-full h-2 overflow-hidden">
+            <div className="bg-gradient-to-r from-blue-500 to-indigo-500 h-full rounded-full animate-pulse"></div>
+          </div>
+        </div>
       </div>
     </div>
   );
 
   const ErrorState = () => (
-    <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100 flex items-center justify-center">
       <div className="text-center max-w-md">
-        <AlertCircle className="h-12 w-12 text-red-500 mx-auto mb-4" />
-        <h3 className="text-lg font-medium text-gray-900 mb-2">Failed to Load Data</h3>
-        <p className="text-gray-500 mb-4">{error}</p>
-        <button 
-          onClick={loadData}
-          className="btn-primary inline-flex items-center"
-        >
-          <RefreshCw className="h-4 w-4 mr-2" />
-          Try Again
-        </button>
+        <div className="glass-card">
+          <AlertCircle className="h-16 w-16 text-red-500 mx-auto mb-6" />
+          <h3 className="text-xl font-bold text-gray-900 mb-3">Connection Issue</h3>
+          <p className="text-gray-600 mb-6">{error}</p>
+          <button 
+            onClick={loadData}
+            className="btn-primary inline-flex items-center"
+          >
+            <RefreshCw className="h-5 w-5 mr-2" />
+            Retry Connection
+          </button>
+        </div>
       </div>
     </div>
   );
@@ -75,32 +88,44 @@ function App() {
   if (error) return <ErrorState />;
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      {/* Header */}
-      <header className="bg-white shadow-sm border-b border-gray-200">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-between h-16">
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100">
+      {/* Enhanced Header */}
+      <header className="header-gradient shadow-xl border-b border-white/20 sticky top-0 z-50">
+        <div className="max-w-7xl mx-auto px-6 lg:px-8">
+          <div className="flex items-center justify-between h-20">
             <div className="flex items-center">
-              <BarChart3 className="h-8 w-8 text-primary-600 mr-3" />
-              <div>
-                <h1 className="text-xl font-bold text-gray-900">Tenstorrent's TT-Metal Eltwise Performance Tracker</h1>
-                <p className="text-sm text-gray-500">Real-time eltwise operation performance monitoring</p>
+              <div className="relative">
+                <div className="absolute inset-0 bg-blue-600 rounded-xl blur-lg opacity-30"></div>
+                <div className="relative bg-gradient-to-br from-blue-500 to-indigo-600 p-3 rounded-xl">
+                  <Zap className="h-8 w-8 text-white" />
+                </div>
+              </div>
+              <div className="ml-4">
+                <h1 className="text-2xl font-bold bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">
+                  Tenstorrent TT-Metal
+                </h1>
+                <p className="text-lg font-semibold text-gray-700">Eltwise Performance Tracker</p>
+                <p className="text-sm text-gray-500 flex items-center">
+                  <TrendingUp className="h-4 w-4 mr-1" />
+                  Real-time operation performance monitoring
+                </p>
               </div>
             </div>
             
-            <div className="flex items-center space-x-4">
+            <div className="flex items-center space-x-6">
               {lastRefresh && (
-                <span className="text-sm text-gray-500">
-                  Last updated: {lastRefresh.toLocaleTimeString()}
-                </span>
+                <div className="text-right">
+                  <div className="text-sm font-medium text-gray-700">Last Updated</div>
+                  <div className="text-xs text-gray-500">{lastRefresh.toLocaleTimeString()}</div>
+                </div>
               )}
               <button 
                 onClick={loadData}
-                className="btn-secondary inline-flex items-center"
+                className="btn-secondary inline-flex items-center pulse-glow"
                 disabled={loading}
               >
                 <RefreshCw className={`h-4 w-4 mr-2 ${loading ? 'animate-spin' : ''}`} />
-                Refresh
+                Refresh Data
               </button>
             </div>
           </div>
@@ -108,30 +133,42 @@ function App() {
       </header>
 
       {/* Main Content */}
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div className="animate-fade-in">
-          <OverviewCards 
-            summaryStats={summaryStats} 
-            dailyComparison={dailyComparison} 
-          />
-          <PerformanceTable operations={processedOperations} dailyData={data?.daily || []} />
-        </div>
+      <main className="max-w-7xl mx-auto px-6 lg:px-8 py-8 space-y-8">
+        {/* Overview Section */}
+        <section className="fade-in">
+          <div className="mb-6">
+            <h2 className="text-2xl font-bold text-gray-900 mb-2">Performance Overview</h2>
+            <p className="text-gray-600">Key metrics and trends for TTNN eltwise operations</p>
+          </div>
+          <OverviewCards summaryStats={summaryStats} dailyComparison={dailyComparison} />
+        </section>
+
+        {/* Performance Table Section */}
+        <section className="slide-up">
+          <div className="mb-6">
+            <h2 className="text-2xl font-bold text-gray-900 mb-2">Detailed Performance Analysis</h2>
+            <p className="text-gray-600">Day-by-day performance comparison across all operations</p>
+          </div>
+          <div className="glass-card">
+            <PerformanceTable 
+              operations={processedOperations}
+              summaryStats={summaryStats}
+            />
+          </div>
+        </section>
       </main>
 
       {/* Footer */}
-      <footer className="bg-white border-t border-gray-200 mt-12">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between">
+      <footer className="mt-16 bg-white/50 backdrop-blur-sm border-t border-white/20">
+        <div className="max-w-7xl mx-auto px-6 lg:px-8 py-6">
+          <div className="flex items-center justify-between">
             <div className="text-sm text-gray-500">
-              <p>Tenstorrent TT-Metal Eltwise Performance Tracker • {summaryStats?.totalOperations || 0} operations monitored</p>
+              © 2025 Tenstorrent. Neural Network Performance Analytics.
             </div>
-            <div className="mt-2 sm:mt-0 text-sm text-gray-500">
-              {summaryStats && (
-                <p>
-                  Last measurement: {new Date(summaryStats.lastUpdated).toLocaleString()} 
-                  {summaryStats.gitCommit && ` • Commit: ${summaryStats.gitCommit}`}
-                </p>
-              )}
+            <div className="flex items-center space-x-4 text-sm text-gray-500">
+              <span>Powered by TT-Metal</span>
+              <span>•</span>
+              <span>{summaryStats?.totalOperations || 0} Operations Tracked</span>
             </div>
           </div>
         </div>

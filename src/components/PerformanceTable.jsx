@@ -559,7 +559,7 @@ const PerformanceTable = ({ operations, dailyData }) => {
                      <td key={dateObj.date} className="table-cell text-center relative">
                        {dayData ? (
                          <div className="flex flex-col items-center">
-                           <span className={`font-mono text-sm font-medium px-2 py-1 rounded-md ${colorClass}`}>
+                           <span className={`performance-cell ${colorClass}`}>
                              {formatValue(dayData.duration_ns, selectedUnit)}{selectedUnit}
                            </span>
                            
