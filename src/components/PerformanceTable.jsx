@@ -29,15 +29,7 @@ const PerformanceTable = ({ operations, dailyData }) => {
     };
   }, []);
 
-  // Auto-scroll to rightmost column (latest results) on data load
-  useEffect(() => {
-    if (tableScrollRef.current && dateColumns.length > 0) {
-      // Small delay to ensure table is rendered
-      setTimeout(() => {
-        tableScrollRef.current.scrollLeft = tableScrollRef.current.scrollWidth;
-      }, 100);
-    }
-  }, [dateColumns.length, filteredAndSortedData.length]);
+
 
   const convertFromNanoseconds = (nanoseconds, unit) => {
     switch (unit) {
