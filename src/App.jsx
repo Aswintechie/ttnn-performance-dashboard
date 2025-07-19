@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { BarChart3, RefreshCw, AlertCircle, Zap, Activity, TrendingUp } from 'lucide-react';
+import { BarChart3, RefreshCw, AlertCircle, Zap, Activity, TrendingUp, Book } from 'lucide-react';
 import OverviewCards from './components/OverviewCards';
 import PerformanceTable from './components/PerformanceTable';
+import CatalogModal from './components/CatalogModal';
 import { 
   loadPerformanceData, 
   processOperationData, 
@@ -14,6 +15,7 @@ function App() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [lastRefresh, setLastRefresh] = useState(null);
+  const [isCatalogOpen, setIsCatalogOpen] = useState(false);
 
   const loadData = async () => {
     try {
@@ -120,6 +122,13 @@ function App() {
                 </div>
               )}
               <button 
+                onClick={() => setIsCatalogOpen(true)}
+                className="btn-secondary inline-flex items-center mr-3"
+              >
+                <Book className="h-4 w-4 mr-2" />
+                Operations Catalog
+              </button>
+              <button 
                 onClick={loadData}
                 className="btn-secondary inline-flex items-center pulse-glow"
                 disabled={loading}
@@ -173,6 +182,12 @@ function App() {
           </div>
         </div>
       </footer>
+
+      {/* Catalog Modal */}
+      <CatalogModal 
+        isOpen={isCatalogOpen} 
+        onClose={() => setIsCatalogOpen(false)} 
+      />
     </div>
   );
 }
