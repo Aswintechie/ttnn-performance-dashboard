@@ -510,10 +510,10 @@ const PerformanceTable = ({ operations, dailyData }) => {
         <table className="min-w-full relative border-collapse">
           <thead>
             <tr className="border-b border-gray-200">
-              <SortableHeader sortKey="operation_name" className="table-sticky-left-0 bg-gray-50 text-center border-r border-gray-200 px-4">
+              <SortableHeader sortKey="operation_name" className="table-sticky-left-0 bg-gray-50 text-center border-r border-gray-200 px-4 z-40">
                 Operation
               </SortableHeader>
-              <th className="table-header text-center table-sticky-left-160 bg-gray-50 border-r border-gray-200 px-4">Category</th>
+              <th className="table-header text-center table-sticky-left-160 bg-gray-50 border-r border-gray-200 px-4 z-30">Category</th>
               {dateColumns.map((dateObj, index) => (
                 <SortableHeader key={dateObj.date} sortKey={dateObj.date} className="min-w-32 text-center">
                   <div className="flex flex-col items-center">
