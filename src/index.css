@@ -40,4 +40,17 @@
   .metric-card {
     @apply bg-gradient-to-br from-white to-gray-50 rounded-xl shadow-sm border border-gray-200 p-6 hover:shadow-md transition-shadow duration-200;
   }
+
+  /* Sticky table columns */
+  .table-sticky-left-0 {
+    position: sticky !important;
+    left: 0 !important;
+    z-index: 30 !important;
+  }
+  
+  .table-sticky-left-48 {
+    position: sticky !important;
+    left: 12rem !important; /* 192px = 48 * 4px */
+    z-index: 20 !important;
+  }
 } 
