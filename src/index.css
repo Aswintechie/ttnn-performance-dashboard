@@ -46,11 +46,15 @@
     position: sticky !important;
     left: 0 !important;
     z-index: 30 !important;
+    width: 200px !important;
+    box-shadow: 2px 0 4px rgba(0, 0, 0, 0.1) !important;
   }
   
-  .table-sticky-left-48 {
+  .table-sticky-left-200 {
     position: sticky !important;
-    left: 12rem !important; /* 192px = 48 * 4px */
+    left: 200px !important;
     z-index: 20 !important;
+    width: 150px !important;
+    box-shadow: 2px 0 4px rgba(0, 0, 0, 0.1) !important;
   }
 } 
