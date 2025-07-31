@@ -12,7 +12,7 @@ const PerformanceTable = ({ operations, dailyData }) => {
     'Ternary', 'Reduction', 'Complex'
   ]);
   const [showFilters, setShowFilters] = useState(false);
-  const [showAllColumns, setShowAllColumns] = useState(false); // New state for showing all columns
+  const [showAllColumns, setShowAllColumns] = useState(true); // New state for showing all columns
   const filterRef = useRef(null);
   const tableScrollRef = useRef(null);
 
