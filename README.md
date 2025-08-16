@@ -1,6 +1,6 @@
 # 🚀 Tenstorrent TT-Metal Eltwise Performance Tracker
 
-[![Deploy Status](https://img.shields.io/badge/Deploy-Live-brightgreen)](https://ttnn-eltwise-performance.aswinlocal.in)
+[![Deploy Status](https://img.shields.io/badge/Deploy-Live-brightgreen)](https://ttnn-eltwise-performance.aswincloud.com)
 [![React](https://img.shields.io/badge/React-18.2.0-blue)](https://reactjs.org/)
 [![Vite](https://img.shields.io/badge/Vite-4.5.14-purple)](https://vitejs.dev/)
 [![Tailwind CSS](https://img.shields.io/badge/Tailwind%20CSS-3.4.13-teal)](https://tailwindcss.com/)
@@ -10,7 +10,7 @@
 
 ## 🌟 **Live Demo**
 
-🔗 **[ttnn-eltwise-performance.aswinlocal.in](https://ttnn-eltwise-performance.aswinlocal.in)**
+🔗 **[ttnn-eltwise-performance.aswincloud.com](https://ttnn-eltwise-performance.aswincloud.com)**
 
 ---
 
@@ -255,7 +255,7 @@ This project is licensed under the **MIT License** - see the [LICENSE](LICENSE) 
 
 - 📧 **Issues**: [GitHub Issues](https://github.com/Aswintechie/ttnn-performance-dashboard/issues)
 - 💬 **Discussions**: [GitHub Discussions](https://github.com/Aswintechie/ttnn-performance-dashboard/discussions)
-- 🌐 **Live Demo**: [ttnn-eltwise-performance.aswinlocal.in](https://ttnn-eltwise-performance.aswinlocal.in)
+- 🌐 **Live Demo**: [ttnn-eltwise-performance.aswincloud.com](https://ttnn-eltwise-performance.aswincloud.com)
 
 ---
 
