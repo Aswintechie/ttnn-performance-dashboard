@@ -6,5 +6,5 @@ directory = "./dist"
 
 # Custom domain configuration
 [[routes]]
-pattern = "ttnn-eltwise-performance.aswinlocal.in/*"
-zone_name = "aswinlocal.in" 
+pattern = "ttnn-eltwise-performance.aswincloud.com/*"
+zone_name = "aswincloud.com" 
