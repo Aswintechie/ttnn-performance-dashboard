@@ -1,6 +1,6 @@
 {
-  "last_updated": "2025-11-07T08:47:31.780923",
-  "total_measurements": 436,
+  "last_updated": "2025-11-07T14:41:07.546411",
+  "total_measurements": 437,
   "files": [
     {
       "filename": "2025-07-16_eltwise_perf_results_20250716_152516_final.json",
@@ -3922,6 +3922,15 @@
       "path": "data/daily/2025-11-07_eltwise_perf_results_20251107_060941_final.json",
       "measurement_date": "2025-11-07T06:09:41.449082",
       "git_commit_id": "69183f71ed7e0e7cfb868dad0505987274111d94",
+      "total_tests": 256,
+      "successful_tests": 256,
+      "failed_tests": 0
+    },
+    {
+      "filename": "2025-11-07_eltwise_perf_results_20251107_120033_final.json",
+      "path": "data/daily/2025-11-07_eltwise_perf_results_20251107_120033_final.json",
+      "measurement_date": "2025-11-07T12:00:33.799782",
+      "git_commit_id": "ccbaa7fa76c24b737c1630add8fda5e0282b2811",
       "total_tests": 256,
       "successful_tests": 256,
       "failed_tests": 0
