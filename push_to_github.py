@@ -48,7 +48,7 @@ class GitHubPerformanceUploader:
                 self._update_latest_results(results_data)
 
             # Update index.json with new entry
-            self._update_index(results_data)
+            self._update_index(results_data, json_file_path)
 
             # Commit and push changes
             if not self._commit_and_push():
@@ -142,7 +142,7 @@ class GitHubPerformanceUploader:
         except Exception as e:
             print(f"⚠️ Warning: Could not update latest results: {e}")
 
-    def _update_index(self, results_data):
+    def _update_index(self, results_data, json_file_path):
         """Update the index.json file with the new results entry."""
         try:
             index_file = self.dashboard_dir / "data" / "index.json"
@@ -171,9 +171,14 @@ class GitHubPerformanceUploader:
             # Create new entry
             metadata = results_data.get('metadata', {})
             date_str = metadata.get('measurement_date', datetime.now().isoformat())
+
+            # Use the original filename from the source file, not generate a new one
+            original_filename = os.path.basename(json_file_path)
+            dashboard_filename = f"{date_str.split('T')[0]}_{original_filename}"
+
             new_entry = {
-                'filename': f"{date_str.split('T')[0]}_eltwise_perf_results_{datetime.now().strftime('%Y%m%d_%H%M%S')}_final.json",
-                'path': f"data/daily/{date_str.split('T')[0]}_eltwise_perf_results_{datetime.now().strftime('%Y%m%d_%H%M%S')}_final.json",
+                'filename': dashboard_filename,
+                'path': f"data/daily/{dashboard_filename}",
                 'measurement_date': date_str,
                 'git_commit_id': metadata.get('git_commit_id', 'unknown'),
                 'total_tests': metadata.get('total_tests', 0),
