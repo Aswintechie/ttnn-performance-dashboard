@@ -1,0 +1,86 @@
+name: Daily Commit Check
+
+# Runs daily at 00:00 UTC to check if there's been at least one commit in the last 24 hours
+on:
+  schedule:
+    # Runs at 00:00 UTC every day
+    - cron: '0 0 * * *'
+  workflow_dispatch: # Allows manual triggering for testing
+
+permissions:
+  contents: read
+  issues: write
+
+jobs:
+  check-recent-commits:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0 # Fetch all history to check commit timestamps
+
+      - name: Check for commits in last 24 hours
+        id: check_commits
+        run: |
+          # Get the timestamp from 24 hours ago
+          YESTERDAY=$(date -u -d '24 hours ago' '+%Y-%m-%d %H:%M:%S')
+          echo "Checking for commits since: $YESTERDAY"
+          
+          # Count commits in the last 24 hours
+          COMMIT_COUNT=$(git log --since="$YESTERDAY" --oneline | wc -l)
+          echo "Number of commits in last 24 hours: $COMMIT_COUNT"
+          
+          if [ "$COMMIT_COUNT" -eq 0 ]; then
+            echo "no_commits=true" >> $GITHUB_OUTPUT
+            echo "⚠️ No commits found in the last 24 hours"
+          else
+            echo "no_commits=false" >> $GITHUB_OUTPUT
+            echo "✅ Found $COMMIT_COUNT commit(s) in the last 24 hours"
+          fi
+
+      - name: Create issue if no commits
+        if: steps.check_commits.outputs.no_commits == 'true'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const yesterday = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
+            
+            // Check if there's already an open issue about this
+            const issues = await github.rest.issues.listForRepo({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              state: 'open',
+              labels: 'no-recent-commits'
+            });
+            
+            // Only create a new issue if one doesn't already exist
+            if (issues.data.length === 0) {
+              await github.rest.issues.create({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                title: '⚠️ No commits in the last 24 hours',
+                body: `## Daily Commit Check Alert
+            
+            This is an automated notification from the daily commit check workflow.
+            
+            **Alert**: No commits have been detected in the repository in the last 24 hours.
+            
+            **Timestamp**: ${new Date().toISOString()}
+            **Checked since**: ${yesterday}
+            
+            Please ensure regular development activity is maintained.
+            
+            ---
+            *This issue was automatically created by the [Daily Commit Check workflow](.github/workflows/daily-commit-check.yml)*`,
+                labels: ['no-recent-commits', 'automated']
+              });
+              console.log('Created new issue for no recent commits');
+            } else {
+              console.log('An open issue about no recent commits already exists');
+            }
+
+      - name: Report status
+        if: steps.check_commits.outputs.no_commits == 'false'
+        run: |
+          echo "✅ Repository has recent commits. No action needed."
