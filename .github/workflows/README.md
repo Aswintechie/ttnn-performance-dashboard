@@ -15,8 +15,8 @@ Monitors repository activity by checking for commits in the last 24 hours. If no
 
 ### How It Works
 
-1. **Checkout Repository**: Fetches the complete git history
-2. **Check Commits**: Counts commits made in the last 24 hours using `git log --since`
+1. **Checkout Repository**: Fetches recent git history (last 50 commits)
+2. **Check Commits**: Counts commits made in the last 24 hours using `git rev-list --count --since`
 3. **Conditional Notification**: 
    - If commits exist: Logs success and exits
    - If no commits: Creates a GitHub issue with label `no-recent-commits`
