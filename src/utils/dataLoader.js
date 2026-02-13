@@ -1,7 +1,7 @@
 // Utility functions to load and process performance data
 
 // Configuration: Number of recent days to load initially
-const INITIAL_DAILY_FILES = 10;
+const INITIAL_DAILY_FILES = 20;
 const LOAD_MORE_INCREMENT = 20;
 const BACKGROUND_LOAD_BATCH_SIZE = 10; // Load 10 files at a time in background
 const BACKGROUND_LOAD_DELAY = 1000; // Wait 1 second between batches
