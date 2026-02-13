@@ -1,18 +1,18 @@
 import React, { useState, useMemo, useRef, useEffect } from 'react';
-import { Search, ChevronUp, ChevronDown, Filter, BarChart3, TrendingUp, TrendingDown, Minus, Eye, EyeOff } from 'lucide-react';
+import { Search, ChevronUp, ChevronDown, Filter, BarChart3, TrendingUp, TrendingDown, Minus, Eye, EyeOff, Loader2 } from 'lucide-react';
 import { operationsCatalog } from '../utils/operationsCatalog.js';
 
-const PerformanceTable = ({ operations, dailyData }) => {
+const PerformanceTable = ({ operations, dailyData, backgroundLoading, hasMoreDays, totalAvailable, currentlyLoaded }) => {
   const [searchTerm, setSearchTerm] = useState('');
   const [sortConfig, setSortConfig] = useState({ key: 'operation_name', direction: 'asc' });
-  const [selectedUnit, setSelectedUnit] = useState('ms');
+  const [selectedUnit, setSelectedUnit] = useState('ns');
   const [performanceSort, setPerformanceSort] = useState('none');
   const [selectedCategories, setSelectedCategories] = useState([
     'Unary', 'Binary Arithmetic', 'Binary Comparison', 'Binary Logical', 
     'Ternary', 'Reduction', 'Complex'
   ]);
   const [showFilters, setShowFilters] = useState(false);
-  const [showAllColumns, setShowAllColumns] = useState(true); // New state for showing all columns
+  const [showAllColumns, setShowAllColumns] = useState(true);
   const filterRef = useRef(null);
   const tableScrollRef = useRef(null);
 
@@ -424,7 +424,18 @@ const PerformanceTable = ({ operations, dailyData }) => {
           <h2 className="text-lg font-semibold text-gray-900 mb-1">Daily Eltwise Performance Comparison</h2>
           <p className="text-sm text-gray-500">
             {filteredAndSortedData.length} operations 
-            {selectedCategories.length > 0 && ` (${selectedCategories.join(', ')} categories)`} • {displayedDateColumns.length}{!showAllColumns && displayedDateColumns.length < dateColumns.length ? ` of ${dateColumns.length}` : ''} days of data
+            {selectedCategories.length > 0 && ` (${selectedCategories.join(', ')} categories)`} • {displayedDateColumns.length}{!showAllColumns && displayedDateColumns.length < dateColumns.length ? ` of ${dateColumns.length}` : ''} days shown
+            {hasMoreDays && (
+              <span className="ml-2 text-blue-600 font-medium">
+                ({currentlyLoaded} of {totalAvailable} days loaded{backgroundLoading && ' - loading more...'})
+              </span>
+            )}
+            {backgroundLoading && (
+              <span className="ml-2 inline-flex items-center text-blue-500 animate-pulse">
+                <Loader2 className="h-3 w-3 animate-spin mr-1" />
+                Loading in background
+              </span>
+            )}
           </p>
         </div>
         
@@ -437,7 +448,7 @@ const PerformanceTable = ({ operations, dailyData }) => {
               placeholder="Search operations..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent w-full sm:w-64 h-10"
+              className="pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent w-full sm:w-64 h-10"
             />
           </div>
           
@@ -451,7 +462,7 @@ const PerformanceTable = ({ operations, dailyData }) => {
                   onClick={() => setSelectedUnit(unit)}
                   className={`px-3 py-2 text-sm font-medium transition-colors duration-200 h-10 ${
                     selectedUnit === unit
-                      ? 'bg-primary-600 text-white'
+                      ? 'bg-blue-600 text-white'
                       : 'bg-white text-gray-700 hover:bg-gray-50'
                   }`}
                 >
@@ -467,7 +478,7 @@ const PerformanceTable = ({ operations, dailyData }) => {
                 id="showAllColumns"
                 checked={showAllColumns}
                 onChange={(e) => setShowAllColumns(e.target.checked)}
-                className="rounded border-gray-300 text-primary-600 focus:ring-primary-500"
+                className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
               />
               <label htmlFor="showAllColumns" className="flex items-center text-sm font-medium text-gray-700 cursor-pointer whitespace-nowrap">
                 {showAllColumns ? <Eye className="h-4 w-4 mr-1" /> : <EyeOff className="h-4 w-4 mr-1" />}
@@ -489,7 +500,7 @@ const PerformanceTable = ({ operations, dailyData }) => {
                 <Filter className="h-4 w-4 mr-2" />
                 Filter Categories
                 {selectedCategories.length > 0 && (
-                  <span className="ml-2 px-2 py-0.5 bg-primary-100 text-primary-800 rounded-full text-xs">
+                  <span className="ml-2 px-2 py-0.5 bg-blue-100 text-blue-800 rounded-full text-xs">
                     {selectedCategories.length}
                   </span>
                 )}
@@ -511,7 +522,7 @@ const PerformanceTable = ({ operations, dailyData }) => {
                               type="checkbox"
                               checked={selectedCategories.includes(category)}
                               onChange={() => handleCategoryToggle(category)}
-                              className="rounded border-gray-300 text-primary-600 focus:ring-primary-500"
+                              className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
                             />
                             <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${getCategoryColor(category)}`}>
                               {category}
@@ -531,7 +542,7 @@ const PerformanceTable = ({ operations, dailyData }) => {
                               type="checkbox"
                               checked={selectedCategories.includes(category)}
                               onChange={() => handleCategoryToggle(category)}
-                              className="rounded border-gray-300 text-primary-600 focus:ring-primary-500"
+                              className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
                             />
                             <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${getCategoryColor(category)}`}>
                               {category}
@@ -547,7 +558,7 @@ const PerformanceTable = ({ operations, dailyData }) => {
                       <span className="text-sm text-gray-600">{selectedCategories.length} categories selected</span>
                       <button
                         onClick={() => setSelectedCategories([])}
-                        className="text-sm text-primary-600 hover:text-primary-700 font-medium"
+                        className="text-sm text-blue-600 hover:text-blue-700 font-medium"
                       >
                         Clear all
                       </button>
@@ -560,13 +571,16 @@ const PerformanceTable = ({ operations, dailyData }) => {
           
           {/* Performance Sort Section */}
           <div className="flex flex-col sm:flex-row gap-3 items-start sm:items-center">
-            <span className="text-sm font-medium text-gray-700">Performance Sort:</span>
+            <div className="flex flex-col">
+              <span className="text-sm font-medium text-gray-700">Performance Sort</span>
+              <span className="text-xs text-gray-500">(based on latest column)</span>
+            </div>
             <div className="flex border border-gray-300 rounded-lg">
               <button
                 onClick={() => handlePerformanceSort('none')}
-                className={`px-4 py-2 text-sm font-medium transition-colors duration-200 flex items-center justify-center whitespace-nowrap rounded-l-lg ${
+                className={`px-5 py-2 text-sm font-medium transition-colors duration-200 flex items-center justify-center whitespace-nowrap rounded-l-lg ${
                   performanceSort === 'none'
-                    ? 'bg-primary-600 text-white'
+                    ? 'bg-blue-600 text-white'
                     : 'bg-white text-gray-700 hover:bg-gray-50'
                 }`}
               >
@@ -574,7 +588,7 @@ const PerformanceTable = ({ operations, dailyData }) => {
               </button>
               <button
                 onClick={() => handlePerformanceSort('most-improved')}
-                className={`px-4 py-2 text-sm font-medium transition-colors duration-200 flex items-center justify-center whitespace-nowrap border-l border-gray-300 ${
+                className={`px-5 py-2 text-sm font-medium transition-colors duration-200 flex items-center justify-center whitespace-nowrap border-l border-gray-300 ${
                   performanceSort === 'most-improved'
                     ? 'bg-green-600 text-white'
                     : 'bg-white text-gray-700 hover:bg-gray-50'
@@ -584,7 +598,7 @@ const PerformanceTable = ({ operations, dailyData }) => {
               </button>
               <button
                 onClick={() => handlePerformanceSort('most-degraded')}
-                className={`px-4 py-2 text-sm font-medium transition-colors duration-200 flex items-center justify-center whitespace-nowrap border-l border-gray-300 rounded-r-lg ${
+                className={`px-5 py-2 text-sm font-medium transition-colors duration-200 flex items-center justify-center whitespace-nowrap border-l border-gray-300 rounded-r-lg ${
                   performanceSort === 'most-degraded'
                     ? 'bg-red-600 text-white'
                     : 'bg-white text-gray-700 hover:bg-gray-50'
@@ -610,9 +624,9 @@ const PerformanceTable = ({ operations, dailyData }) => {
                   <div className="flex flex-col items-center">
                     <span>{dateObj.date}</span>
                     {index === displayedDateColumns.length - 1 ? (
-                      <span className="text-xs text-primary-600 font-normal">Latest</span>
+                      <span className="text-xs text-blue-600 font-normal">Latest</span>
                     ) : (
-                      <span className="text-xs text-primary-600 font-mono">{dateObj.commitId}</span>
+                      <span className="text-xs text-blue-600 font-mono">{dateObj.commitId}</span>
                     )}
                   </div>
                 </SortableHeader>

@@ -1,6 +1,12 @@
 // Utility functions to load and process performance data
 
-export async function loadPerformanceData() {
+// Configuration: Number of recent days to load initially
+const INITIAL_DAILY_FILES = 10;
+const LOAD_MORE_INCREMENT = 20;
+const BACKGROUND_LOAD_BATCH_SIZE = 10; // Load 10 files at a time in background
+const BACKGROUND_LOAD_DELAY = 1000; // Wait 1 second between batches
+
+export async function loadPerformanceData(limit = INITIAL_DAILY_FILES) {
   try {
     // Load the index file to get available data files
     const indexResponse = await fetch('/data/index.json');
@@ -10,9 +16,53 @@ export async function loadPerformanceData() {
     const latestResponse = await fetch('/data/latest/latest_results.json');
     const latestData = await latestResponse.json();
     
-    // Load all daily data files
+    // Only load the most recent N daily data files (instead of all 563!)
+    const recentFiles = indexData.files.slice(0, limit);
+    
     const dailyData = await Promise.all(
-      indexData.files.map(async (file) => {
+      recentFiles.map(async (file) => {
+        try {
+          const response = await fetch(`/${file.path}`);
+          const data = await response.json();
+          return {
+            ...data,
+            filename: file.filename,
+            date: file.measurement_date
+          };
+        } catch (error) {
+          console.error(`Error loading ${file.filename}:`, error);
+          return null;
+        }
+      })
+    );
+    
+    // Filter out any failed loads
+    const validDailyData = dailyData.filter(d => d !== null);
+    
+    return {
+      index: indexData,
+      latest: latestData,
+      daily: validDailyData,
+      totalAvailable: indexData.files.length,
+      currentlyLoaded: validDailyData.length
+    };
+  } catch (error) {
+    console.error('Error loading performance data:', error);
+    return null;
+  }
+}
+
+// Load additional data in the background
+export async function loadAdditionalData(indexData, currentData, startIndex, batchSize) {
+  const filesToLoad = indexData.files.slice(startIndex, startIndex + batchSize);
+  
+  if (filesToLoad.length === 0) {
+    return [];
+  }
+  
+  const newDailyData = await Promise.all(
+    filesToLoad.map(async (file) => {
+      try {
         const response = await fetch(`/${file.path}`);
         const data = await response.json();
         return {
@@ -20,19 +70,17 @@ export async function loadPerformanceData() {
           filename: file.filename,
           date: file.measurement_date
         };
-      })
-    );
-    
-    return {
-      index: indexData,
-      latest: latestData,
-      daily: dailyData
-    };
-  } catch (error) {
-    console.error('Error loading performance data:', error);
-    return null;
-  }
+      } catch (error) {
+        console.error(`Error loading ${file.filename}:`, error);
+        return null;
+      }
+    })
+  );
+  
+  return newDailyData.filter(d => d !== null);
 }
+
+export { INITIAL_DAILY_FILES, LOAD_MORE_INCREMENT, BACKGROUND_LOAD_BATCH_SIZE, BACKGROUND_LOAD_DELAY };
 
 export function processOperationData(data) {
   if (!data?.latest?.results) return [];
