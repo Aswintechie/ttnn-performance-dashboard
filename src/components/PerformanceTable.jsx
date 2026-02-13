@@ -2,7 +2,7 @@ import React, { useState, useMemo, useRef, useEffect } from 'react';
 import { Search, ChevronUp, ChevronDown, Filter, BarChart3, TrendingUp, TrendingDown, Minus, Eye, EyeOff, Loader2 } from 'lucide-react';
 import { operationsCatalog } from '../utils/operationsCatalog.js';
 
-const PerformanceTable = ({ operations, dailyData, backgroundLoading, hasMoreDays, totalAvailable, currentlyLoaded }) => {
+const PerformanceTable = ({ operations, dailyData, loadingAll, onLoadAllData, hasMoreDays, totalAvailable, currentlyLoaded }) => {
   const [searchTerm, setSearchTerm] = useState('');
   const [sortConfig, setSortConfig] = useState({ key: 'operation_name', direction: 'asc' });
   const [selectedUnit, setSelectedUnit] = useState('ns');
@@ -422,21 +422,35 @@ const PerformanceTable = ({ operations, dailyData, backgroundLoading, hasMoreDay
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-6">
         <div>
           <h2 className="text-lg font-semibold text-gray-900 mb-1">Daily Eltwise Performance Comparison</h2>
-          <p className="text-sm text-gray-500">
-            {filteredAndSortedData.length} operations 
-            {selectedCategories.length > 0 && ` (${selectedCategories.join(', ')} categories)`} • {displayedDateColumns.length}{!showAllColumns && displayedDateColumns.length < dateColumns.length ? ` of ${dateColumns.length}` : ''} days shown
+          <div className="flex items-center gap-3">
+            <p className="text-sm text-gray-500">
+              {filteredAndSortedData.length} operations 
+              {selectedCategories.length > 0 && ` (${selectedCategories.join(', ')} categories)`} • {displayedDateColumns.length}{!showAllColumns && displayedDateColumns.length < dateColumns.length ? ` of ${dateColumns.length}` : ''} days shown
+              {hasMoreDays && (
+                <span className="ml-2 text-gray-700 font-medium">
+                  ({currentlyLoaded} of {totalAvailable} days loaded)
+                </span>
+              )}
+            </p>
             {hasMoreDays && (
-              <span className="ml-2 text-blue-600 font-medium">
-                ({currentlyLoaded} of {totalAvailable} days loaded{backgroundLoading && ' - loading more...'})
-              </span>
+              <button
+                onClick={onLoadAllData}
+                disabled={loadingAll}
+                className="inline-flex items-center gap-2 px-3 py-1.5 text-xs font-medium text-white bg-blue-600 hover:bg-blue-700 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {loadingAll ? (
+                  <>
+                    <Loader2 className="h-3 w-3 animate-spin" />
+                    Loading...
+                  </>
+                ) : (
+                  <>
+                    Load All {totalAvailable - currentlyLoaded} Days
+                  </>
+                )}
+              </button>
             )}
-            {backgroundLoading && (
-              <span className="ml-2 inline-flex items-center text-blue-500 animate-pulse">
-                <Loader2 className="h-3 w-3 animate-spin mr-1" />
-                Loading in background
-              </span>
-            )}
-          </p>
+          </div>
         </div>
         
         <div className="flex flex-col lg:flex-row gap-3 mt-4 sm:mt-0">
