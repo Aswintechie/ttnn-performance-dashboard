@@ -1,21 +1,26 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { BarChart3, RefreshCw, AlertCircle, Zap, Activity, TrendingUp, Book } from 'lucide-react';
 import OverviewCards from './components/OverviewCards';
 import PerformanceTable from './components/PerformanceTable';
 import CatalogModal from './components/CatalogModal';
 import { 
   loadPerformanceData, 
+  loadAdditionalData,
   processOperationData, 
   calculateSummaryStats, 
-  compareDailyData 
+  compareDailyData,
+  BACKGROUND_LOAD_BATCH_SIZE,
+  BACKGROUND_LOAD_DELAY
 } from './utils/dataLoader';
 
 function App() {
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [backgroundLoading, setBackgroundLoading] = useState(false);
   const [error, setError] = useState(null);
   const [lastRefresh, setLastRefresh] = useState(null);
   const [isCatalogOpen, setIsCatalogOpen] = useState(false);
+  const backgroundLoadingRef = useRef(false);
 
   const loadData = async () => {
     try {
@@ -38,9 +43,69 @@ function App() {
     }
   };
 
+  // Background loading function
+  const startBackgroundLoading = async () => {
+    if (!data || backgroundLoadingRef.current) return;
+    
+    backgroundLoadingRef.current = true;
+    setBackgroundLoading(true);
+    
+    let currentIndex = data.currentlyLoaded;
+    const maxToLoad = Math.min(50, data.totalAvailable); // Load up to 50 days in background
+    
+    console.log(`🔄 Starting background loading from ${currentIndex} to ${maxToLoad} days...`);
+    
+    while (currentIndex < maxToLoad && backgroundLoadingRef.current) {
+      try {
+        await new Promise(resolve => setTimeout(resolve, BACKGROUND_LOAD_DELAY));
+        
+        const newData = await loadAdditionalData(
+          data.index,
+          data.daily,
+          currentIndex,
+          BACKGROUND_LOAD_BATCH_SIZE
+        );
+        
+        if (newData.length > 0) {
+          setData(prevData => ({
+            ...prevData,
+            daily: [...prevData.daily, ...newData],
+            currentlyLoaded: prevData.currentlyLoaded + newData.length
+          }));
+          
+          currentIndex += newData.length;
+          console.log(`✅ Background loaded ${currentIndex} of ${maxToLoad} days`);
+        } else {
+          break;
+        }
+      } catch (error) {
+        console.error('Background loading error:', error);
+        break;
+      }
+    }
+    
+    setBackgroundLoading(false);
+    backgroundLoadingRef.current = false;
+    console.log(`✅ Background loading complete! Total days: ${currentIndex}`);
+  };
+
   useEffect(() => {
     loadData();
   }, []);
+
+  // Start background loading after initial load completes
+  useEffect(() => {
+    if (data && !loading && !backgroundLoadingRef.current) {
+      const hasMoreToLoad = data.currentlyLoaded < data.totalAvailable;
+      if (hasMoreToLoad) {
+        // Wait 2 seconds after page loads, then start background loading
+        const timer = setTimeout(() => {
+          startBackgroundLoading();
+        }, 2000);
+        return () => clearTimeout(timer);
+      }
+    }
+  }, [data, loading]);
 
   const summaryStats = data ? calculateSummaryStats(data) : null;
   const processedOperations = data ? processOperationData(data) : [];
@@ -162,6 +227,10 @@ function App() {
              <PerformanceTable 
                operations={processedOperations}
                dailyData={data?.daily || []}
+               backgroundLoading={backgroundLoading}
+               hasMoreDays={data ? data.currentlyLoaded < data.totalAvailable : false}
+               totalAvailable={data?.totalAvailable || 0}
+               currentlyLoaded={data?.currentlyLoaded || 0}
              />
            </div>
         </section>
