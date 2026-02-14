@@ -1,5 +1,6 @@
 import React, { useState, useMemo, useRef, useEffect } from 'react';
-import { Search, ChevronUp, ChevronDown, Filter, BarChart3, TrendingUp, TrendingDown, Minus, Eye, EyeOff, Loader2 } from 'lucide-react';
+import { Search, ChevronUp, ChevronDown, Filter, BarChart3, TrendingUp, TrendingDown, Minus, Eye, EyeOff, Loader2, Download } from 'lucide-react';
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import { operationsCatalog } from '../utils/operationsCatalog.js';
 
 const PerformanceTable = ({ operations, dailyData, loadingAll, onLoadAllData, hasMoreDays, totalAvailable, currentlyLoaded }) => {
@@ -13,14 +14,23 @@ const PerformanceTable = ({ operations, dailyData, loadingAll, onLoadAllData, ha
   ]);
   const [showFilters, setShowFilters] = useState(false);
   const [showAllColumns, setShowAllColumns] = useState(true);
+  const [groupByCategory, setGroupByCategory] = useState(false);
+  const [viewMode, setViewMode] = useState('table'); // 'table' or 'chart'
+  const [isTransitioning, setIsTransitioning] = useState(false);
+  const [dateRange, setDateRange] = useState({ start: '', end: '' });
+  const [showExportMenu, setShowExportMenu] = useState(false);
   const filterRef = useRef(null);
   const tableScrollRef = useRef(null);
+  const exportRef = useRef(null);
 
-  // Close filter dropdown when clicking outside
+  // Close dropdowns when clicking outside
   useEffect(() => {
     function handleClickOutside(event) {
       if (filterRef.current && !filterRef.current.contains(event.target)) {
         setShowFilters(false);
+      }
+      if (exportRef.current && !exportRef.current.contains(event.target)) {
+        setShowExportMenu(false);
       }
     }
     
@@ -29,6 +39,16 @@ const PerformanceTable = ({ operations, dailyData, loadingAll, onLoadAllData, ha
       document.removeEventListener('mousedown', handleClickOutside);
     };
   }, []);
+
+  // Handle view mode change with transition
+  const handleViewModeChange = (newMode) => {
+    if (newMode === viewMode) return;
+    setIsTransitioning(true);
+    setTimeout(() => {
+      setViewMode(newMode);
+      setTimeout(() => setIsTransitioning(false), 50);
+    }, 150);
+  };
 
 
 
@@ -232,18 +252,54 @@ const PerformanceTable = ({ operations, dailyData, loadingAll, onLoadAllData, ha
     });
   }, [dailyData]);
 
-  const dateColumns = useMemo(() => {
+  // All date columns without any filtering (for "All Available Days" export)
+  const allDateColumns = useMemo(() => {
     if (!dailyData || dailyData.length === 0) return [];
     
-    return [...dailyData]
+    // Use a Map to deduplicate by date, keeping the latest entry for each date
+    const dateMap = new Map();
+    
+    [...dailyData]
       .sort((a, b) => new Date(a.metadata.measurement_date) - new Date(b.metadata.measurement_date))
-      .map(day => ({
-        date: new Date(day.metadata.measurement_date).toLocaleDateString(),
-        commitId: day.metadata.git_commit_id?.substring(0, 8) || 'N/A'
-      }));
+      .forEach(day => {
+        const dateStr = new Date(day.metadata.measurement_date).toLocaleDateString();
+        // Keep the latest entry for each date (overwrite if duplicate)
+        dateMap.set(dateStr, {
+          date: dateStr,
+          rawDate: new Date(day.metadata.measurement_date),
+          commitId: day.metadata.git_commit_id?.substring(0, 8) || 'N/A'
+        });
+      });
+    
+    return Array.from(dateMap.values());
   }, [dailyData]);
 
-  // Determine which columns have significant performance changes
+  // Filtered date columns (respects date range filter)
+  const dateColumns = useMemo(() => {
+    if (!allDateColumns || allDateColumns.length === 0) return [];
+    
+    // Filter by date range if specified
+    if (dateRange.start || dateRange.end) {
+      return allDateColumns.filter(col => {
+        // Get date in YYYY-MM-DD format for comparison
+        const year = col.rawDate.getFullYear();
+        const month = String(col.rawDate.getMonth() + 1).padStart(2, '0');
+        const day = String(col.rawDate.getDate()).padStart(2, '0');
+        const colDateString = `${year}-${month}-${day}`;
+        
+        const include = !(
+          (dateRange.start && colDateString < dateRange.start) ||
+          (dateRange.end && colDateString > dateRange.end)
+        );
+        
+        return include;
+      });
+    }
+    
+    return allDateColumns;
+  }, [allDateColumns, dateRange]);
+
+  // Determine which columns have significant performance changes (after date range filtering)
   const significantColumns = useMemo(() => {
     if (!processedData || dateColumns.length < 2) return dateColumns;
     
@@ -417,6 +473,63 @@ const PerformanceTable = ({ operations, dailyData, loadingAll, onLoadAllData, ha
     );
   }
 
+  // Group data by category
+  const groupedData = useMemo(() => {
+    if (!groupByCategory) return null;
+    
+    const grouped = {};
+    filteredAndSortedData.forEach(op => {
+      const category = getOperationCategory(op.operation_name);
+      if (!grouped[category]) {
+        grouped[category] = [];
+      }
+      grouped[category].push(op);
+    });
+    
+    return grouped;
+  }, [groupByCategory, filteredAndSortedData]);
+
+  // Export function
+  const exportAsCSV = (exportType = 'current') => {
+    let columnsToExport = displayedDateColumns;
+    
+    // Determine which columns to export based on type
+    if (exportType === 'latest') {
+      columnsToExport = allDateColumns.length > 0 ? [allDateColumns[allDateColumns.length - 1]] : [];
+    } else if (exportType === 'all') {
+      columnsToExport = allDateColumns; // Use ALL date columns, ignoring filters
+    } else if (exportType === 'dateRange') {
+      // Use current date range filtered columns
+      columnsToExport = displayedDateColumns;
+    }
+    // 'current' uses displayedDateColumns as is
+    
+    const headers = ['Operation', 'Category', ...columnsToExport.map(d => `${d.date} (${d.commitId})`)];
+    const rows = filteredAndSortedData.map(op => [
+      op.operation_name,
+      getOperationCategory(op.operation_name),
+      ...columnsToExport.map(d => {
+        const data = op.dailyPerformance[d.date];
+        return data ? `${formatValue(data.duration_ns, selectedUnit)}${selectedUnit}` : 'N/A';
+      })
+    ]);
+    
+    const csvContent = [
+      headers.join(','),
+      ...rows.map(row => row.map(cell => `"${cell}"`).join(','))
+    ].join('\n');
+    
+    const blob = new Blob([csvContent], { type: 'text/csv' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    const typeLabel = exportType === 'latest' ? 'latest' : exportType === 'all' ? 'all' : 'filtered';
+    a.download = `ttnn-performance-${typeLabel}-${new Date().toISOString().split('T')[0]}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
+    setShowExportMenu(false);
+  };
+
   return (
     <div className="card">
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-6">
@@ -427,29 +540,50 @@ const PerformanceTable = ({ operations, dailyData, loadingAll, onLoadAllData, ha
               {filteredAndSortedData.length} operations 
               {selectedCategories.length > 0 && ` (${selectedCategories.join(', ')} categories)`} • {displayedDateColumns.length}{!showAllColumns && displayedDateColumns.length < dateColumns.length ? ` of ${dateColumns.length}` : ''} days shown
               {hasMoreDays && (
-                <span className="ml-2 text-gray-700 font-medium">
-                  ({currentlyLoaded} of {totalAvailable} days loaded)
-                </span>
+                <>
+                  <span className="ml-2 text-gray-700 font-medium">
+                    ({currentlyLoaded} of {totalAvailable} days loaded)
+                  </span>
+                  {loadingAll ? (
+                    <span className="ml-2 inline-flex items-center gap-1 text-blue-600">
+                      <Loader2 className="h-3 w-3 animate-spin" />
+                      Loading...
+                    </span>
+                  ) : (
+                    <button
+                      onClick={onLoadAllData}
+                      className="ml-2 text-blue-600 hover:text-blue-700 underline cursor-pointer font-normal"
+                    >
+                      Load all {totalAvailable - currentlyLoaded} days
+                    </button>
+                  )}
+                </>
               )}
             </p>
-            {hasMoreDays && (
-              <button
-                onClick={onLoadAllData}
-                disabled={loadingAll}
-                className="inline-flex items-center gap-2 px-3 py-1.5 text-xs font-medium text-white bg-blue-600 hover:bg-blue-700 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                {loadingAll ? (
-                  <>
-                    <Loader2 className="h-3 w-3 animate-spin" />
-                    Loading...
-                  </>
-                ) : (
-                  <>
-                    Load All {totalAvailable - currentlyLoaded} Days
-                  </>
-                )}
-              </button>
-            )}
+          </div>
+          
+          {/* View Mode Toggle */}
+          <div className="inline-flex border border-gray-300 rounded-lg overflow-hidden h-10">
+            <button
+              onClick={() => handleViewModeChange('table')}
+              className={`px-4 py-2 text-sm font-medium transition-all duration-300 ease-in-out border-r border-gray-300 ${
+                viewMode === 'table' 
+                  ? 'bg-blue-600 text-white border-blue-600' 
+                  : 'bg-white text-gray-700 hover:bg-gray-50'
+              }`}
+            >
+              Table
+            </button>
+            <button
+              onClick={() => handleViewModeChange('chart')}
+              className={`px-4 py-2 text-sm font-medium transition-all duration-300 ease-in-out ${
+                viewMode === 'chart' 
+                  ? 'bg-blue-600 text-white' 
+                  : 'bg-white text-gray-700 hover:bg-gray-50'
+              }`}
+            >
+              Charts
+            </button>
           </div>
         </div>
         
@@ -474,7 +608,7 @@ const PerformanceTable = ({ operations, dailyData, loadingAll, onLoadAllData, ha
                 <button
                   key={unit}
                   onClick={() => setSelectedUnit(unit)}
-                  className={`px-3 py-2 text-sm font-medium transition-colors duration-200 h-10 ${
+                  className={`px-3 py-2 text-sm font-medium transition-all duration-300 ease-in-out h-10 ${
                     selectedUnit === unit
                       ? 'bg-blue-600 text-white'
                       : 'bg-white text-gray-700 hover:bg-gray-50'
@@ -503,6 +637,19 @@ const PerformanceTable = ({ operations, dailyData, loadingAll, onLoadAllData, ha
                   ({dateColumns.length - significantColumns.length} hidden)
                 </span>
               )}
+            </div>
+            
+            <div className="flex items-center gap-2 px-4 py-2 border border-gray-300 rounded-lg bg-white h-10">
+              <input
+                type="checkbox"
+                id="groupByCategory"
+                checked={groupByCategory}
+                onChange={(e) => setGroupByCategory(e.target.checked)}
+                className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+              />
+              <label htmlFor="groupByCategory" className="flex items-center text-sm font-medium text-gray-700 cursor-pointer whitespace-nowrap">
+                Group by Category
+              </label>
             </div>
             
             {/* Filter Dropdown */}
@@ -581,52 +728,182 @@ const PerformanceTable = ({ operations, dailyData, loadingAll, onLoadAllData, ha
                 </div>
               )}
             </div>
-          </div>
-          
-          {/* Performance Sort Section */}
-          <div className="flex flex-col sm:flex-row gap-3 items-start sm:items-center">
-            <div className="flex flex-col">
-              <span className="text-sm font-medium text-gray-700">Performance Sort</span>
-              <span className="text-xs text-gray-500">(based on latest column)</span>
+            
+            {/* Export Dropdown */}
+            <div className="relative" ref={exportRef}>
+              <button
+                onClick={() => setShowExportMenu(!showExportMenu)}
+                className="flex items-center px-4 py-2 border border-gray-300 rounded-lg bg-white hover:bg-gray-50 text-sm font-medium text-gray-700 h-10"
+                title="Export as CSV"
+              >
+                <Download className="h-4 w-4 mr-2" />
+                Export CSV
+                <ChevronDown className={`h-4 w-4 ml-2 transition-transform duration-200 ${showExportMenu ? 'rotate-180' : ''}`} />
+              </button>
+              
+              {showExportMenu && (
+                <div className="absolute top-full mt-2 right-0 z-50 bg-white border border-gray-300 rounded-lg shadow-lg py-2 min-w-64">
+                  <div className="px-4 py-2 text-xs text-gray-500 border-b border-gray-200">
+                    Export Options
+                  </div>
+                  <button
+                    onClick={() => exportAsCSV('current')}
+                    className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 flex items-center justify-between"
+                  >
+                    <span>Current View</span>
+                    <span className="text-xs text-gray-500">
+                      {displayedDateColumns.length} day{displayedDateColumns.length !== 1 ? 's' : ''}
+                    </span>
+                  </button>
+                  <button
+                    onClick={() => exportAsCSV('latest')}
+                    className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50"
+                  >
+                    Latest Day Only
+                  </button>
+                  <button
+                    onClick={() => exportAsCSV('all')}
+                    className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50"
+                  >
+                    <div className="flex items-center justify-between">
+                      <span>All Loaded Days</span>
+                      <span className="text-xs text-gray-500">
+                        {allDateColumns.length} day{allDateColumns.length !== 1 ? 's' : ''}
+                      </span>
+                    </div>
+                    <div className="text-xs text-gray-400 mt-0.5">
+                      Ignores filters & view settings
+                    </div>
+                  </button>
+                </div>
+              )}
             </div>
-            <div className="flex border border-gray-300 rounded-lg">
-              <button
-                onClick={() => handlePerformanceSort('none')}
-                className={`px-5 py-2 text-sm font-medium transition-colors duration-200 flex items-center justify-center whitespace-nowrap rounded-l-lg ${
-                  performanceSort === 'none'
-                    ? 'bg-blue-600 text-white'
-                    : 'bg-white text-gray-700 hover:bg-gray-50'
-                }`}
-              >
-                None
-              </button>
-              <button
-                onClick={() => handlePerformanceSort('most-improved')}
-                className={`px-5 py-2 text-sm font-medium transition-colors duration-200 flex items-center justify-center whitespace-nowrap border-l border-gray-300 ${
-                  performanceSort === 'most-improved'
-                    ? 'bg-green-600 text-white'
-                    : 'bg-white text-gray-700 hover:bg-gray-50'
-                }`}
-              >
-                Improved
-              </button>
-              <button
-                onClick={() => handlePerformanceSort('most-degraded')}
-                className={`px-5 py-2 text-sm font-medium transition-colors duration-200 flex items-center justify-center whitespace-nowrap border-l border-gray-300 rounded-r-lg ${
-                  performanceSort === 'most-degraded'
-                    ? 'bg-red-600 text-white'
-                    : 'bg-white text-gray-700 hover:bg-gray-50'
-                }`}
-              >
-                Degraded
-              </button>
+            
+            {/* Date Range Filter */}
+            <div className="flex items-center gap-2 border border-gray-300 rounded-lg px-3 py-2 bg-white h-10">
+              <span className="text-xs font-medium text-gray-700 whitespace-nowrap">Date Range:</span>
+              <input
+                type="date"
+                value={dateRange.start}
+                onChange={(e) => setDateRange(prev => ({ ...prev, start: e.target.value }))}
+                className="text-xs border-0 focus:ring-0 p-0 h-6 w-28"
+                placeholder="Start"
+              />
+              <span className="text-gray-400">—</span>
+              <input
+                type="date"
+                value={dateRange.end}
+                onChange={(e) => setDateRange(prev => ({ ...prev, end: e.target.value }))}
+                className="text-xs border-0 focus:ring-0 p-0 h-6 w-28"
+                placeholder="End"
+              />
+              {(dateRange.start || dateRange.end) && (
+                <button
+                  onClick={() => setDateRange({ start: '', end: '' })}
+                  className="text-xs text-gray-500 hover:text-gray-700"
+                  title="Clear date range"
+                >
+                  ✕
+                </button>
+              )}
+            </div>
+          </div>
+        </div>
+        
+        {/* Performance Sort Section (separate row) */}
+        <div className="flex flex-col sm:flex-row gap-3 items-start sm:items-center mt-3">
+          <div className="flex flex-col gap-2 w-full">
+            <div className="flex flex-col sm:flex-row gap-3 items-start sm:items-center">
+              <div className="flex flex-col">
+                <span className="text-sm font-medium text-gray-700">Performance Sort</span>
+                <span className="text-xs text-gray-500">(based on latest column)</span>
+              </div>
+              <div className="flex border border-gray-300 rounded-lg">
+                <button
+                  onClick={() => handlePerformanceSort('none')}
+                  className={`px-5 py-2 text-sm font-medium transition-all duration-300 ease-in-out flex items-center justify-center whitespace-nowrap rounded-l-lg ${
+                    performanceSort === 'none'
+                      ? 'bg-blue-600 text-white'
+                      : 'bg-white text-gray-700 hover:bg-gray-50'
+                  }`}
+                >
+                  None
+                </button>
+                <button
+                  onClick={() => handlePerformanceSort('most-improved')}
+                  className={`px-5 py-2 text-sm font-medium transition-all duration-300 ease-in-out flex items-center justify-center whitespace-nowrap border-l border-gray-300 ${
+                    performanceSort === 'most-improved'
+                      ? 'bg-green-600 text-white'
+                      : 'bg-white text-gray-700 hover:bg-gray-50'
+                  }`}
+                >
+                  Improved
+                </button>
+                <button
+                  onClick={() => handlePerformanceSort('most-degraded')}
+                  className={`px-5 py-2 text-sm font-medium transition-all duration-300 ease-in-out flex items-center justify-center whitespace-nowrap border-l border-gray-300 rounded-r-lg ${
+                    performanceSort === 'most-degraded'
+                      ? 'bg-red-600 text-white'
+                      : 'bg-white text-gray-700 hover:bg-gray-50'
+                  }`}
+                >
+                  Degraded
+                </button>
+              </div>
             </div>
           </div>
         </div>
       </div>
 
-      <div className="overflow-x-auto relative" ref={tableScrollRef}>
-        <table className="min-w-full relative border-collapse">
+      {/* Lower is better indicator - right above table */}
+      <div className="flex justify-end mb-2">
+        <span className="inline-flex items-center gap-1 text-xs font-medium text-gray-600 bg-gray-50 px-3 py-1 rounded border border-gray-200">
+          <TrendingUp className="h-3.5 w-3.5 text-green-600" />
+          Lower is better
+        </span>
+      </div>
+
+      {viewMode === 'chart' ? (
+        <div className={`space-y-6 mt-4 transition-opacity duration-150 ${isTransitioning ? 'opacity-0' : 'opacity-100'}`}>
+          {filteredAndSortedData.map((operation) => {
+            const chartData = displayedDateColumns.map(dateObj => ({
+              date: dateObj.date,
+              commitId: dateObj.commitId,
+              value: operation.dailyPerformance[dateObj.date]?.duration_ns 
+                ? convertFromNanoseconds(operation.dailyPerformance[dateObj.date].duration_ns, selectedUnit).value 
+                : null
+            })).filter(d => d.value !== null);
+
+            return (
+              <div key={operation.operation_name} className="bg-white border border-gray-200 rounded-lg p-4">
+                <div className="flex items-center justify-between mb-4">
+                  <h3 className="font-semibold text-gray-900">{operation.operation_name}</h3>
+                  <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getCategoryColor(getOperationCategory(operation.operation_name))}`}>
+                    {getOperationCategory(operation.operation_name)}
+                  </span>
+                </div>
+                <ResponsiveContainer width="100%" height={200}>
+                  <LineChart data={chartData}>
+                    <CartesianGrid strokeDasharray="3 3" />
+                    <XAxis dataKey="date" tick={{ fontSize: 12 }} />
+                    <YAxis tick={{ fontSize: 12 }} label={{ value: selectedUnit, angle: -90, position: 'insideLeft' }} />
+                    <Tooltip 
+                      formatter={(value) => [`${value.toFixed(3)} ${selectedUnit}`, 'Performance']}
+                      labelFormatter={(label) => {
+                        const dataPoint = chartData.find(d => d.date === label);
+                        return `${label} (${dataPoint?.commitId || 'N/A'})`;
+                      }}
+                    />
+                    <Line type="monotone" dataKey="value" stroke="#3b82f6" strokeWidth={2} dot={{ r: 3 }} />
+                  </LineChart>
+                </ResponsiveContainer>
+              </div>
+            );
+          })}
+        </div>
+      ) : (
+        <div className={`overflow-x-auto relative transition-opacity duration-150 ${isTransitioning ? 'opacity-0' : 'opacity-100'}`} ref={tableScrollRef}>
+          <table className="min-w-full relative border-collapse">
           <thead>
             <tr className="border-b border-gray-200">
               <SortableHeader sortKey="operation_name" className="table-sticky-left-0 bg-gray-50 text-center border-r border-gray-200 px-4 z-40">
@@ -637,10 +914,9 @@ const PerformanceTable = ({ operations, dailyData, loadingAll, onLoadAllData, ha
                 <SortableHeader key={dateObj.date} sortKey={dateObj.date} className="min-w-32 text-center">
                   <div className="flex flex-col items-center">
                     <span>{dateObj.date}</span>
-                    {index === displayedDateColumns.length - 1 ? (
-                      <span className="text-xs text-blue-600 font-normal">Latest</span>
-                    ) : (
-                      <span className="text-xs text-blue-600 font-mono">{dateObj.commitId}</span>
+                    <span className="text-xs text-blue-600 font-mono">{dateObj.commitId}</span>
+                    {index === displayedDateColumns.length - 1 && (
+                      <span className="text-xs text-green-600 font-semibold">Latest</span>
                     )}
                   </div>
                 </SortableHeader>
@@ -648,16 +924,84 @@ const PerformanceTable = ({ operations, dailyData, loadingAll, onLoadAllData, ha
             </tr>
           </thead>
           <tbody>
-            {filteredAndSortedData.map((operation, index) => (
-              <tr key={operation.operation_name} className="hover:bg-gray-50 transition-colors duration-150 group">
-                <td className="table-cell-sticky table-sticky-left-0 bg-white group-hover:bg-gray-50 font-medium text-gray-900 border-r border-gray-200 text-center transition-colors duration-150">
-                  {operation.operation_name}
-                </td>
-                <td className="table-cell-sticky text-center table-sticky-left-160 bg-white group-hover:bg-gray-50 border-r border-gray-200 transition-colors duration-150">
-                  <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getCategoryColor(getOperationCategory(operation.operation_name))}`}>
-                    {getOperationCategory(operation.operation_name)}
-                  </span>
-                </td>
+            {groupByCategory ? (
+              Object.entries(groupedData).map(([category, operations]) => (
+                <React.Fragment key={category}>
+                  <tr className="bg-gray-100 border-t-2 border-gray-300">
+                    <td colSpan={2 + displayedDateColumns.length} className="py-2 px-4 font-semibold text-gray-700 text-left">
+                      <span className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-medium ${getCategoryColor(category)}`}>
+                        {category} ({operations.length})
+                      </span>
+                    </td>
+                  </tr>
+                  {operations.map((operation) => (
+                    <tr key={operation.operation_name} className="hover:bg-gray-50 transition-colors duration-150 group h-10">
+                      <td className="table-cell-sticky table-sticky-left-0 bg-white group-hover:bg-gray-50 font-medium text-gray-900 border-r border-gray-200 text-center transition-colors duration-150 py-1">
+                        {operation.operation_name}
+                      </td>
+                      <td className="table-cell-sticky text-center table-sticky-left-160 bg-white group-hover:bg-gray-50 border-r border-gray-200 transition-colors duration-150 py-1">
+                        <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getCategoryColor(getOperationCategory(operation.operation_name))}`}>
+                          {getOperationCategory(operation.operation_name)}
+                        </span>
+                      </td>
+                      {displayedDateColumns.map((dateObj, dateIndex) => {
+                        const dayData = operation.dailyPerformance[dateObj.date];
+                        const previousDateObj = dateIndex > 0 ? displayedDateColumns[dateIndex - 1] : null;
+                        const previousData = previousDateObj ? operation.dailyPerformance[previousDateObj.date] : null;
+                        const change = getPerformanceChange(dayData, previousData);
+                        
+                        const previousValue = previousData?.duration_ns;
+                        const isFirstColumn = dateIndex === 0;
+                        const colorClass = dayData ? getPerformanceColor(dayData.duration_ns, previousValue, isFirstColumn) : '';
+                        const previousChangePercent = !isFirstColumn && previousValue && dayData ? 
+                          ((dayData.duration_ns - previousValue) / previousValue * 100) : 0;
+                        
+                        return (
+                          <td key={dateObj.date} className="table-cell text-center relative py-1">
+                            {dayData ? (
+                              <div className="flex flex-col items-center">
+                                <span className={`performance-cell ${colorClass}`}>
+                                  {formatValue(dayData.duration_ns, selectedUnit)}{selectedUnit}
+                                </span>
+                                {change && change.trend !== 'stable' && (
+                                  <div className={`flex items-center text-xs ${
+                                    change.trend === 'better' ? 'text-green-600' : 'text-red-600'
+                                  }`}>
+                                    {change.trend === 'better' ? (
+                                      <TrendingUp className="h-3 w-3 mr-1" />
+                                    ) : (
+                                      <TrendingDown className="h-3 w-3 mr-1" />
+                                    )}
+                                    {Math.abs(parseFloat(change.percentage))}%
+                                  </div>
+                                )}
+                                {change && change.trend === 'stable' && (
+                                  <div className="flex items-center text-xs text-gray-400">
+                                    <Minus className="h-3 w-3" />
+                                  </div>
+                                )}
+                              </div>
+                            ) : (
+                              <span className="text-gray-400 text-sm">—</span>
+                            )}
+                          </td>
+                        );
+                      })}
+                    </tr>
+                  ))}
+                </React.Fragment>
+              ))
+            ) : (
+              filteredAndSortedData.map((operation, index) => (
+                <tr key={operation.operation_name} className="hover:bg-gray-50 transition-colors duration-150 group h-10">
+                  <td className="table-cell-sticky table-sticky-left-0 bg-white group-hover:bg-gray-50 font-medium text-gray-900 border-r border-gray-200 text-center transition-colors duration-150 py-1">
+                    {operation.operation_name}
+                  </td>
+                  <td className="table-cell-sticky text-center table-sticky-left-160 bg-white group-hover:bg-gray-50 border-r border-gray-200 transition-colors duration-150 py-1">
+                    <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getCategoryColor(getOperationCategory(operation.operation_name))}`}>
+                      {getOperationCategory(operation.operation_name)}
+                    </span>
+                  </td>
                 {displayedDateColumns.map((dateObj, dateIndex) => {
                    const dayData = operation.dailyPerformance[dateObj.date];
                    const previousDateObj = dateIndex > 0 ? displayedDateColumns[dateIndex - 1] : null;
@@ -675,7 +1019,7 @@ const PerformanceTable = ({ operations, dailyData, loadingAll, onLoadAllData, ha
                      ((dayData.duration_ns - previousValue) / previousValue * 100) : 0;
                    
                    return (
-                     <td key={dateObj.date} className="table-cell text-center relative">
+                     <td key={dateObj.date} className="table-cell text-center relative py-1">
                        {dayData ? (
                          <div className="flex flex-col items-center">
                            <span className={`performance-cell ${colorClass}`}>
@@ -708,17 +1052,19 @@ const PerformanceTable = ({ operations, dailyData, loadingAll, onLoadAllData, ha
                    );
                  })}
                </tr>
-             ))}
-           </tbody>
-         </table>
-       </div>
+              ))
+            )}
+          </tbody>
+        </table>
+        </div>
+      )}
 
-       {filteredAndSortedData.length === 0 && (
-         <div className="text-center py-8">
-           <Search className="h-8 w-8 text-gray-400 mx-auto mb-2" />
-           <p className="text-gray-500">No operations match your search criteria.</p>
-         </div>
-       )}
+      {filteredAndSortedData.length === 0 && viewMode === 'table' && (
+        <div className="text-center py-8">
+          <Search className="h-8 w-8 text-gray-400 mx-auto mb-2" />
+          <p className="text-gray-500">No operations match your search criteria.</p>
+        </div>
+      )}
 
        <div className="mt-4 border-t pt-4 space-y-3">
          <div className="flex items-center justify-between text-xs text-gray-500">
