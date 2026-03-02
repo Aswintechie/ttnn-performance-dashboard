@@ -40,6 +40,7 @@ jobs:
           fi
 
       - name: Create issue if no commits
+        id: create_issue
         if: steps.check_commits.outputs.no_commits == 'true'
         uses: actions/github-script@v7
         with:
@@ -56,7 +57,7 @@ jobs:
             
             // Only create a new issue if one doesn't already exist
             if (issues.data.length === 0) {
-              await github.rest.issues.create({
+              const issue = await github.rest.issues.create({
                 owner: context.repo.owner,
                 repo: context.repo.repo,
                 title: '⚠️ No commits in the last 24 hours',
@@ -76,8 +77,26 @@ jobs:
                 labels: ['no-recent-commits', 'automated']
               });
               console.log('Created new issue for no recent commits');
+              return issue.data.number;
             } else {
               console.log('An open issue about no recent commits already exists');
+              return null;
+            }
+
+      - name: Add comment tagging owner
+        if: steps.check_commits.outputs.no_commits == 'true' && steps.create_issue.outputs.result != 'null'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const issueNumber = parseInt('${{ steps.create_issue.outputs.result }}');
+            if (issueNumber) {
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: issueNumber,
+                body: '@Aswinmcw - Please review this alert about no recent commits.'
+              });
+              console.log('Added comment tagging the repository owner');
             }
 
       - name: Report status
