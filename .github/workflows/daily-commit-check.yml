@@ -94,7 +94,7 @@ jobs:
                 owner: context.repo.owner,
                 repo: context.repo.repo,
                 issue_number: issueNumber,
-                body: '@Aswintechie - Please review this alert about no recent commits.'
+                body: '@Aswinmcw - Please review this alert about no recent commits.'
               });
               console.log('Added comment tagging the repository owner');
             }
