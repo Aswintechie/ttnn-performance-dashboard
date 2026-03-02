@@ -88,14 +88,16 @@ jobs:
         uses: actions/github-script@v7
         with:
           script: |
-            const issueNumber = ${{ steps.create_issue.outputs.result }};
-            await github.rest.issues.createComment({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              issue_number: issueNumber,
-              body: '@Aswintechie - Please review this alert about no recent commits.'
-            });
-            console.log('Added comment tagging the repository owner');
+            const issueNumber = parseInt('${{ steps.create_issue.outputs.result }}');
+            if (issueNumber) {
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: issueNumber,
+                body: '@Aswintechie - Please review this alert about no recent commits.'
+              });
+              console.log('Added comment tagging the repository owner');
+            }
 
       - name: Report status
         if: steps.check_commits.outputs.no_commits == 'false'
