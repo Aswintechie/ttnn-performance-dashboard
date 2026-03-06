@@ -57,7 +57,7 @@ function App() {
       const allNewData = await Promise.all(
         remainingFiles.map(async (file) => {
           try {
-            const response = await fetch(`/${file.path}`);
+            const response = await fetch(`${import.meta.env.BASE_URL}${file.path}`);
             const fileData = await response.json();
             return {
               ...fileData,

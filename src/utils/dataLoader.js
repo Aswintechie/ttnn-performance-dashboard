@@ -7,13 +7,14 @@ const BACKGROUND_LOAD_BATCH_SIZE = 10; // Load 10 files at a time in background
 const BACKGROUND_LOAD_DELAY = 1000; // Wait 1 second between batches
 
 export async function loadPerformanceData(limit = INITIAL_DAILY_FILES) {
+  const base = import.meta.env.BASE_URL;
   try {
     // Load the index file to get available data files
-    const indexResponse = await fetch('/data/index.json');
+    const indexResponse = await fetch(`${base}data/index.json`);
     const indexData = await indexResponse.json();
     
     // Load the latest results
-    const latestResponse = await fetch('/data/latest/latest_results.json');
+    const latestResponse = await fetch(`${base}data/latest/latest_results.json`);
     const latestData = await latestResponse.json();
     
     // Only load the most recent N daily data files (instead of all 563!)
@@ -22,7 +23,7 @@ export async function loadPerformanceData(limit = INITIAL_DAILY_FILES) {
     const dailyData = await Promise.all(
       recentFiles.map(async (file) => {
         try {
-          const response = await fetch(`/${file.path}`);
+          const response = await fetch(`${base}${file.path}`);
           const data = await response.json();
           return {
             ...data,
@@ -54,6 +55,7 @@ export async function loadPerformanceData(limit = INITIAL_DAILY_FILES) {
 
 // Load additional data in the background
 export async function loadAdditionalData(indexData, currentData, startIndex, batchSize) {
+  const base = import.meta.env.BASE_URL;
   const filesToLoad = indexData.files.slice(startIndex, startIndex + batchSize);
   
   if (filesToLoad.length === 0) {
@@ -63,7 +65,7 @@ export async function loadAdditionalData(indexData, currentData, startIndex, bat
   const newDailyData = await Promise.all(
     filesToLoad.map(async (file) => {
       try {
-        const response = await fetch(`/${file.path}`);
+        const response = await fetch(`${base}${file.path}`);
         const data = await response.json();
         return {
           ...data,
