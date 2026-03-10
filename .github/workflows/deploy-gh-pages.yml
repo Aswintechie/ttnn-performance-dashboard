@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - main
+      - 'copilot/fix-blank-page-on-gh-pages'
   workflow_dispatch:
 
 permissions:
