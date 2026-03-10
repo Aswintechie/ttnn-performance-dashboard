@@ -4,7 +4,7 @@ on:
   push:
     branches:
       - main
-      - 'copilot/fix-blank-page-on-gh-pages'
+      - 'copilot/fix-blank-page-on-gh-pages'  # TODO: Remove this line before merging to main
   workflow_dispatch:
 
 permissions:
