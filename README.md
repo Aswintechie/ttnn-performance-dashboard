@@ -28,6 +28,7 @@ The **Tenstorrent TT-Metal Eltwise Performance Tracker** is an advanced React-ba
 - **🎨 Color-Coded Performance** - Green for improvements, red for degradations with percentage changes
 - **📱 Responsive Design** - Modern UI with sticky columns and horizontal scrolling support
 - **🔄 Real-time Data Loading** - Automatic data fetching and processing
+- **📧 Automated Email Alerts** - Get notified when performance changes exceed 20% threshold (via Resend API)
 
 ---
 
@@ -224,11 +225,30 @@ We welcome contributions! Please follow these guidelines:
 
 ---
 
+## 📧 **Performance Alerts**
+
+The dashboard includes automated email notifications for significant performance changes:
+
+- **Automatic Detection**: Compares latest results with previous measurements
+- **Threshold-Based Alerts**: Sends emails when any operation changes by >20%
+- **Detailed Reports**: HTML emails with regressions and improvements
+- **Resend API Integration**: Reliable email delivery using Resend
+- **GitHub Actions Workflow**: Automatic triggering on new data
+
+📖 **[Complete Alert Documentation](PERFORMANCE_ALERTS.md)**
+
+### Setup
+1. Add `RESEND_API_KEY` to GitHub repository secrets
+2. Alerts automatically sent to `aswin@aswincloud.com`
+3. Configurable threshold via environment variables
+
+---
+
 ## 📋 **Roadmap**
 
+- [x] **Performance Alerting** - Email notifications for significant performance regressions
 - [ ] **Real-time Data Updates** - WebSocket integration for live performance monitoring
 - [ ] **Historical Analysis** - Extended trend analysis with configurable date ranges
-- [ ] **Performance Alerting** - Notifications for significant performance regressions
 - [ ] **Export Functionality** - CSV/PDF export for performance reports
 - [ ] **Comparison Tools** - Side-by-side operation performance comparisons
 - [ ] **API Integration** - Direct integration with TT-Metal performance testing infrastructure
