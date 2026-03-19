@@ -250,7 +250,7 @@ class PerformanceChangeDetector:
         
         return html_body
     
-    def send_email_resend(self, subject: str, html_body: str, to_email: str, api_key: str) -> bool:
+    def send_email_resend(self, subject: str, html_body: str, to_email: str, api_key: str, from_email: str = None) -> bool:
         """
         Send email using Resend API.
         
@@ -259,6 +259,7 @@ class PerformanceChangeDetector:
             html_body: HTML email body
             to_email: Recipient email address
             api_key: Resend API key
+            from_email: Optional sender email (defaults to onboarding@resend.dev for testing)
             
         Returns:
             True if email sent successfully, False otherwise
@@ -270,8 +271,12 @@ class PerformanceChangeDetector:
             "Content-Type": "application/json"
         }
         
+        # Use configured sender or default to onboarding email for testing
+        if from_email is None:
+            from_email = "TTNN Performance Dashboard <onboarding@resend.dev>"
+        
         payload = {
-            "from": "TTNN Performance Dashboard <onboarding@resend.dev>",
+            "from": from_email,
             "to": [to_email],
             "subject": subject,
             "html": html_body
@@ -294,7 +299,7 @@ class PerformanceChangeDetector:
             print(f"❌ Error sending email: {e}")
             return False
     
-    def run(self, api_key: str, to_email: str) -> int:
+    def run(self, api_key: str, to_email: str, from_email: str = None) -> int:
         """
         Main execution method.
         
@@ -351,7 +356,7 @@ class PerformanceChangeDetector:
         html_body = self.format_email_body(changes, latest_metadata, previous_metadata)
         
         # Send email
-        success = self.send_email_resend(subject, html_body, to_email, api_key)
+        success = self.send_email_resend(subject, html_body, to_email, api_key, from_email)
         
         if success:
             print("✅ Performance change detection and notification completed successfully!")
@@ -373,12 +378,15 @@ def main():
     # Get recipient email (default to aswin@aswincloud.com)
     to_email = os.environ.get('ALERT_EMAIL', 'aswin@aswincloud.com')
     
+    # Get sender email (optional, for production use with verified domain)
+    from_email = os.environ.get('FROM_EMAIL')
+    
     # Get threshold from environment or use default
     threshold = float(os.environ.get('PERF_CHANGE_THRESHOLD', '20.0'))
     
     # Create detector and run
     detector = PerformanceChangeDetector(threshold_percent=threshold)
-    exit_code = detector.run(api_key, to_email)
+    exit_code = detector.run(api_key, to_email, from_email)
     
     sys.exit(exit_code)
 

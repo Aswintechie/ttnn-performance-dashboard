@@ -51,6 +51,7 @@ The following environment variables can be configured:
 |----------|-------------|---------|
 | `RESEND_API_KEY` | Resend API key (required) | None |
 | `ALERT_EMAIL` | Recipient email address | `aswin@aswincloud.com` |
+| `FROM_EMAIL` | Sender email (optional, for verified domain) | `onboarding@resend.dev` |
 | `PERF_CHANGE_THRESHOLD` | Percentage change threshold | `20.0` |
 
 ### Email Template
@@ -156,7 +157,11 @@ The workflow will:
 - The script needs at least 2 measurement files in `data/daily/`
 - Ensure performance measurements have been run at least twice
 
-### Issue: All operations show as changed
+### Issue: Email from address shows onboarding@resend.dev
+- This is the default test sender address
+- For production use, configure a verified domain in Resend
+- Set the `FROM_EMAIL` environment variable with your verified sender address
+- Example: `FROM_EMAIL="alerts@yourdomain.com"`
 - Check if there were significant system/hardware changes
 - Verify the measurement methodology is consistent
 - Consider adjusting the threshold if normal variance is higher
