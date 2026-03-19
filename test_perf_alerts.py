@@ -140,12 +140,12 @@ def create_test_data():
         {
             "test_name": "test_sigmoid",
             "operation_name": "sigmoid",
-            "runs": [2520.0, 2540.0, 2530.0],  # +0.8% - no alert (under threshold)
+            "runs": [2528.0, 2532.0, 2530.0],  # +0.8% - no alert (under threshold)
             "successful_runs": 3,
             "average_duration_ns": 2530.0,
-            "std_deviation_ns": 10.0,
-            "min_duration_ns": 2520.0,
-            "max_duration_ns": 2540.0,
+            "std_deviation_ns": 2.0,
+            "min_duration_ns": 2528.0,
+            "max_duration_ns": 2532.0,
             "timestamp": latest_date
         }
     ]
