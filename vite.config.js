@@ -1,7 +1,7 @@
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 
-export default defineConfig(({ mode }) => ({
+export default defineConfig(() => ({
   plugins: [react()],
   // Use GitHub Pages base path only when VITE_GITHUB_PAGES=true, otherwise use root for Cloudflare
   base: process.env.VITE_GITHUB_PAGES === 'true' ? '/ttnn-performance-dashboard/' : '/',
