@@ -299,6 +299,84 @@ class PerformanceChangeDetector:
             print(f"❌ Error sending email: {e}")
             return False
     
+    def send_test_email(self, api_key: str, to_email: str, from_email: str = None) -> int:
+        """
+        Send a test email with sample performance change data to verify the notification system.
+
+        Returns:
+            0 if email sent successfully
+            1 if error occurred
+        """
+        print("🧪 TEST EMAIL MODE — sending sample performance alert email...")
+
+        # Build sample changes that exercise both regressions and improvements
+        now_str = datetime.now().isoformat()
+        yesterday_str = (datetime.now() - timedelta(days=1)).isoformat()
+
+        sample_changes = [
+            {
+                'operation_name': 'abs',
+                'test_name': 'test_abs',
+                'previous_avg_ns': 1005.0,
+                'latest_avg_ns': 1306.5,
+                'change_percent': 30.0,
+                'change_type': 'regression',
+                'previous_timestamp': yesterday_str,
+                'latest_timestamp': now_str,
+            },
+            {
+                'operation_name': 'exp',
+                'test_name': 'test_exp',
+                'previous_avg_ns': 2010.0,
+                'latest_avg_ns': 2512.5,
+                'change_percent': 25.0,
+                'change_type': 'regression',
+                'previous_timestamp': yesterday_str,
+                'latest_timestamp': now_str,
+            },
+            {
+                'operation_name': 'sqrt',
+                'test_name': 'test_sqrt',
+                'previous_avg_ns': 1510.0,
+                'latest_avg_ns': 1057.0,
+                'change_percent': -30.0,
+                'change_type': 'improvement',
+                'previous_timestamp': yesterday_str,
+                'latest_timestamp': now_str,
+            },
+        ]
+
+        sample_latest_metadata = {
+            'measurement_date': now_str,
+            'git_commit_id': 'testcommit001',
+        }
+        sample_previous_metadata = {
+            'measurement_date': yesterday_str,
+            'git_commit_id': 'testcommit000',
+        }
+
+        subject = f"🧪 [TEST] TTNN Performance Alert: {len(sample_changes)} sample operation(s) changed >{self.threshold_percent}%"
+        html_body = self.format_email_body(sample_changes, sample_latest_metadata, sample_previous_metadata)
+
+        # Prepend a prominent test banner to the HTML body
+        test_banner = """
+        <div style="background-color:#fff3cd;border:2px solid #ffc107;padding:15px;border-radius:5px;margin-bottom:20px;">
+            <strong>🧪 THIS IS A TEST EMAIL</strong><br>
+            The data below is sample/mock data used to verify the email notification system.
+            No real performance changes were detected.
+        </div>
+        """
+        html_body = html_body.replace("<body>", "<body>" + test_banner, 1)
+
+        success = self.send_email_resend(subject, html_body, to_email, api_key, from_email)
+
+        if success:
+            print("✅ Test email sent successfully! Check your inbox.")
+            return 0
+        else:
+            print("❌ Failed to send test email.")
+            return 1
+
     def run(self, api_key: str, to_email: str, from_email: str = None) -> int:
         """
         Main execution method.
@@ -383,10 +461,16 @@ def main():
     
     # Get threshold from environment or use default
     threshold = float(os.environ.get('PERF_CHANGE_THRESHOLD', '20.0'))
-    
+
     # Create detector and run
     detector = PerformanceChangeDetector(threshold_percent=threshold)
-    exit_code = detector.run(api_key, to_email, from_email)
+
+    # Check if test email mode is requested
+    send_test_email = os.environ.get('SEND_TEST_EMAIL', 'false').lower() in ('true', '1', 'yes')
+    if send_test_email:
+        exit_code = detector.send_test_email(api_key, to_email, from_email)
+    else:
+        exit_code = detector.run(api_key, to_email, from_email)
     
     sys.exit(exit_code)
 
