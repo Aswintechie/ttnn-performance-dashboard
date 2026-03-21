@@ -8,6 +8,12 @@ on:
       - 'data/index.json'
       - 'data/latest/latest_results.json'
   workflow_dispatch: # Allow manual triggering for testing
+    inputs:
+      send_test_email:
+        description: 'Send a test email to verify the email notification system works (no real performance data required)'
+        required: false
+        default: false
+        type: boolean
 
 permissions:
   contents: read
@@ -36,6 +42,7 @@ jobs:
           RESEND_API_KEY: ${{ secrets.RESEND_API_KEY }}
           ALERT_EMAIL: 'aswin@aswincloud.com'
           PERF_CHANGE_THRESHOLD: '20.0'
+          SEND_TEST_EMAIL: ${{ inputs.send_test_email && 'true' || 'false' }}
         run: |
           echo "🔍 Checking for performance changes..."
           python check_perf_changes.py
