@@ -277,6 +277,9 @@ class PerformanceChangeDetector:
             print(f"⚠️  Warning: Using default test sender (onboarding@resend.dev)")
             print(f"   This can only send to the Resend account owner's email.")
             print(f"   To send to other recipients, set FROM_EMAIL with a verified domain.")
+        else:
+            # Strip whitespace from provided email
+            from_email = from_email.strip()
         
         # Validate email format
         # First check for basic @ presence
@@ -361,7 +364,8 @@ class PerformanceChangeDetector:
                     if 'application/json' in content_type:
                         try:
                             response_data = response.json()
-                        except json.JSONDecodeError:
+                        except json.JSONDecodeError as e:
+                            print(f"⚠️  Warning: Could not parse error response as JSON: {e}")
                             pass
                     
                     error_message = response_data.get('message', '')
