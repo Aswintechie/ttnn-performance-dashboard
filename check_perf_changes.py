@@ -290,7 +290,7 @@ class PerformanceChangeDetector:
         if '<' in from_email and '>' in from_email:
             try:
                 email_part = from_email.split('<')[1].split('>')[0].strip()
-            except:
+            except (IndexError, AttributeError):
                 print(f"❌ Error: Invalid FROM_EMAIL format: {from_email}")
                 print(f"   Expected format: 'Name <email@domain.com>' or 'email@domain.com'")
                 return False
@@ -343,7 +343,7 @@ class PerformanceChangeDetector:
                     if 'application/json' in content_type:
                         try:
                             response_data = response.json()
-                        except:
+                        except (ValueError, json.JSONDecodeError):
                             pass
                     
                     error_message = response_data.get('message', '')
