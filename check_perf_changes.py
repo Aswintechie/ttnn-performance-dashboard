@@ -278,10 +278,22 @@ class PerformanceChangeDetector:
             print(f"   This can only send to the Resend account owner's email.")
             print(f"   To send to other recipients, set FROM_EMAIL with a verified domain.")
         
-        # Validate email format
-        if '@' not in from_email:
+        # Validate email format (basic check for @ symbol and domain part)
+        if '@' not in from_email or from_email.count('@') != 1:
             print(f"❌ Error: Invalid FROM_EMAIL format: {from_email}")
             print(f"   Expected format: 'Name <email@domain.com>' or 'email@domain.com'")
+            return False
+        
+        # Extract email from "Name <email@domain.com>" format if needed
+        email_part = from_email
+        if '<' in from_email and '>' in from_email:
+            email_part = from_email.split('<')[1].split('>')[0]
+        
+        # Basic validation: email should have @ with parts on both sides
+        parts = email_part.split('@')
+        if len(parts) != 2 or not parts[0] or not parts[1] or '.' not in parts[1]:
+            print(f"❌ Error: Invalid email format in FROM_EMAIL: {from_email}")
+            print(f"   Email must have format: user@domain.com")
             return False
         
         # Check if using test domain
@@ -314,7 +326,14 @@ class PerformanceChangeDetector:
                 
                 # Provide helpful error messages for common issues
                 if response.status_code == 403:
-                    response_data = response.json() if response.headers.get('content-type') == 'application/json' else {}
+                    response_data = {}
+                    content_type = response.headers.get('content-type', '')
+                    if 'application/json' in content_type:
+                        try:
+                            response_data = response.json()
+                        except:
+                            pass
+                    
                     error_message = response_data.get('message', '')
                     
                     if 'domain' in error_message.lower() or 'resend.dev' in error_message.lower():
