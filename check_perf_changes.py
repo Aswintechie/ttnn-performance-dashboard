@@ -272,7 +272,7 @@ class PerformanceChangeDetector:
         }
         
         # Use configured sender or default to onboarding email for testing
-        if from_email is None or not from_email.strip():
+        if not from_email or not from_email.strip():
             from_email = "TTNN Performance Dashboard <onboarding@resend.dev>"
             print(f"⚠️  Warning: Using default test sender (onboarding@resend.dev)")
             print(f"   This can only send to the Resend account owner's email.")
@@ -288,12 +288,25 @@ class PerformanceChangeDetector:
         # Extract email from "Name <email@domain.com>" format if present
         email_part = from_email
         if '<' in from_email and '>' in from_email:
+            # Validate proper bracket pairing
+            open_bracket_idx = from_email.find('<')
+            close_bracket_idx = from_email.find('>')
+            if close_bracket_idx <= open_bracket_idx:
+                print(f"❌ Error: Invalid FROM_EMAIL format: {from_email}")
+                print(f"   Expected format: 'Name <email@domain.com>' or 'email@domain.com'")
+                return False
+            
             try:
                 email_part = from_email.split('<')[1].split('>')[0].strip()
             except (IndexError, AttributeError):
                 print(f"❌ Error: Invalid FROM_EMAIL format: {from_email}")
                 print(f"   Expected format: 'Name <email@domain.com>' or 'email@domain.com'")
                 return False
+        elif '<' in from_email or '>' in from_email:
+            # Mismatched brackets
+            print(f"❌ Error: Invalid FROM_EMAIL format: {from_email}")
+            print(f"   Brackets must be properly paired: 'Name <email@domain.com>'")
+            return False
         
         # Validate the extracted email: must have exactly one @ with valid parts
         if email_part.count('@') != 1:
@@ -308,8 +321,8 @@ class PerformanceChangeDetector:
             print(f"   Email must have format: user@domain.com")
             return False
         
-        # Check if using test domain
-        if 'resend.dev' in from_email.lower():
+        # Check if using test domain (check against the actual email part, not display name)
+        if 'resend.dev' in email_part.lower():
             print(f"⚠️  Note: Using Resend test domain (resend.dev)")
             print(f"   Emails can only be sent to your Resend account email address.")
             print(f"   To send to '{to_email}', verify a custom domain and update FROM_EMAIL.")
