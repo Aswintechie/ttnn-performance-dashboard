@@ -259,7 +259,7 @@ class PerformanceChangeDetector:
             html_body: HTML email body
             to_email: Recipient email address
             api_key: Resend API key
-            from_email: Optional sender email (defaults to onboarding@resend.dev for testing)
+            from_email: Optional sender email (must use a verified domain for production)
             
         Returns:
             True if email sent successfully, False otherwise
@@ -272,8 +272,68 @@ class PerformanceChangeDetector:
         }
         
         # Use configured sender or default to onboarding email for testing
-        if from_email is None:
+        if not (from_email and from_email.strip()):
             from_email = "TTNN Performance Dashboard <onboarding@resend.dev>"
+            print(f"⚠️  Warning: Using default test sender (onboarding@resend.dev)")
+            print(f"   This can only send to the Resend account owner's email.")
+            print(f"   To send to other recipients, set FROM_EMAIL with a verified domain.")
+        else:
+            # Strip whitespace from provided email
+            from_email = from_email.strip()
+        
+        # Validate email format
+        # First check for basic @ presence
+        if '@' not in from_email:
+            print(f"❌ Error: Invalid FROM_EMAIL format: {from_email}")
+            print(f"   Expected format: 'Name <email@domain.com>' or 'email@domain.com'")
+            return False
+        
+        # Extract email from "Name <email@domain.com>" format if present
+        email_part = from_email
+        if '<' in from_email and '>' in from_email:
+            # Validate proper bracket pairing
+            open_bracket_idx = from_email.find('<')
+            close_bracket_idx = from_email.find('>')
+            if close_bracket_idx < open_bracket_idx:
+                print(f"❌ Error: Invalid FROM_EMAIL format: {from_email}")
+                print(f"   Expected format: 'Name <email@domain.com>' or 'email@domain.com'")
+                return False
+            
+            # Extract email using the bracket indices
+            email_part = from_email[open_bracket_idx + 1:close_bracket_idx].strip()
+            if not email_part:
+                print(f"❌ Error: Invalid FROM_EMAIL format: {from_email}")
+                print(f"   Email cannot be empty within brackets")
+                return False
+        elif '<' in from_email or '>' in from_email:
+            # Mismatched brackets
+            print(f"❌ Error: Invalid FROM_EMAIL format: {from_email}")
+            print(f"   Brackets must be properly paired: 'Name <email@domain.com>'")
+            return False
+        
+        # Validate the extracted email: must have exactly one @ with valid parts
+        if email_part.count('@') != 1:
+            print(f"❌ Error: Invalid FROM_EMAIL format: {from_email}")
+            print(f"   Expected format: 'Name <email@domain.com>' or 'email@domain.com'")
+            return False
+        
+        # Split and validate user@domain parts
+        parts = email_part.split('@')
+        if not parts[0] or not parts[1]:
+            print(f"❌ Error: Invalid email format in FROM_EMAIL: {from_email}")
+            print(f"   Email must have format: user@domain.com")
+            return False
+        
+        # Warn if domain doesn't have a dot (might be localhost or unusual TLD)
+        if '.' not in parts[1]:
+            print(f"⚠️  Warning: Domain '{parts[1]}' doesn't contain a dot")
+            print(f"   This may be valid for localhost or certain TLDs, but could be a typo")
+        
+        # Check if using test domain (check against the actual email part, not display name)
+        if 'resend.dev' in email_part.lower():
+            print(f"⚠️  Note: Using Resend test domain (resend.dev)")
+            print(f"   Emails can only be sent to your Resend account email address.")
+            print(f"   To send to '{to_email}', verify a custom domain and update FROM_EMAIL.")
         
         payload = {
             "from": from_email,
@@ -284,6 +344,9 @@ class PerformanceChangeDetector:
         
         try:
             print(f"📧 Sending email to {to_email}...")
+            print(f"   From: {from_email}")
+            print(f"   Subject: {subject}")
+            
             response = requests.post(url, json=payload, headers=headers)
             
             if response.status_code == 200:
@@ -293,6 +356,29 @@ class PerformanceChangeDetector:
             else:
                 print(f"❌ Failed to send email. Status code: {response.status_code}")
                 print(f"   Response: {response.text}")
+                
+                # Provide helpful error messages for common issues
+                if response.status_code == 403:
+                    response_data = {}
+                    content_type = response.headers.get('content-type', '').lower()
+                    if 'application/json' in content_type:
+                        try:
+                            response_data = response.json()
+                        except json.JSONDecodeError as e:
+                            print(f"⚠️  Warning: Could not parse error response as JSON: {e}")
+                    
+                    error_message = response_data.get('message', '')
+                    
+                    if 'domain' in error_message.lower() or 'resend.dev' in error_message.lower():
+                        print(f"\n💡 Domain Restriction Issue:")
+                        print(f"   The sender domain needs to be verified with Resend.")
+                        print(f"   Current sender: {from_email}")
+                        print(f"   ")
+                        print(f"   To fix this:")
+                        print(f"   1. Verify a custom domain in your Resend account")
+                        print(f"   2. Set FROM_EMAIL environment variable (e.g., 'alerts@yourdomain.com')")
+                        print(f"   3. Update the GitHub Actions workflow or secrets")
+                
                 return False
                 
         except Exception as e:
