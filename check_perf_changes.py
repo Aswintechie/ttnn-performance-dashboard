@@ -272,7 +272,7 @@ class PerformanceChangeDetector:
         }
         
         # Use configured sender or default to onboarding email for testing
-        if not from_email or not from_email.strip():
+        if not (from_email and from_email.strip()):
             from_email = "TTNN Performance Dashboard <onboarding@resend.dev>"
             print(f"⚠️  Warning: Using default test sender (onboarding@resend.dev)")
             print(f"   This can only send to the Resend account owner's email.")
@@ -361,7 +361,7 @@ class PerformanceChangeDetector:
                     if 'application/json' in content_type:
                         try:
                             response_data = response.json()
-                        except (ValueError, json.JSONDecodeError):
+                        except json.JSONDecodeError:
                             pass
                     
                     error_message = response_data.get('message', '')
