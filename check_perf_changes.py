@@ -291,16 +291,16 @@ class PerformanceChangeDetector:
             # Validate proper bracket pairing
             open_bracket_idx = from_email.find('<')
             close_bracket_idx = from_email.find('>')
-            if close_bracket_idx <= open_bracket_idx:
+            if close_bracket_idx < open_bracket_idx:
                 print(f"❌ Error: Invalid FROM_EMAIL format: {from_email}")
                 print(f"   Expected format: 'Name <email@domain.com>' or 'email@domain.com'")
                 return False
             
-            try:
-                email_part = from_email.split('<')[1].split('>')[0].strip()
-            except (IndexError, AttributeError):
+            # Extract email using the bracket indices
+            email_part = from_email[open_bracket_idx + 1:close_bracket_idx].strip()
+            if not email_part:
                 print(f"❌ Error: Invalid FROM_EMAIL format: {from_email}")
-                print(f"   Expected format: 'Name <email@domain.com>' or 'email@domain.com'")
+                print(f"   Email cannot be empty within brackets")
                 return False
         elif '<' in from_email or '>' in from_email:
             # Mismatched brackets
@@ -316,10 +316,15 @@ class PerformanceChangeDetector:
         
         # Split and validate user@domain parts
         parts = email_part.split('@')
-        if not parts[0] or not parts[1] or '.' not in parts[1]:
+        if not parts[0] or not parts[1]:
             print(f"❌ Error: Invalid email format in FROM_EMAIL: {from_email}")
             print(f"   Email must have format: user@domain.com")
             return False
+        
+        # Warn if domain doesn't have a dot (might be localhost or unusual TLD)
+        if '.' not in parts[1]:
+            print(f"⚠️  Warning: Domain '{parts[1]}' doesn't contain a dot")
+            print(f"   This may be valid for localhost or certain TLDs, but could be a typo")
         
         # Check if using test domain (check against the actual email part, not display name)
         if 'resend.dev' in email_part.lower():
