@@ -259,7 +259,7 @@ class PerformanceChangeDetector:
             html_body: HTML email body
             to_email: Recipient email address
             api_key: Resend API key
-            from_email: Optional sender email (defaults to onboarding@resend.dev for testing)
+            from_email: Optional sender email (must use a verified domain for production)
             
         Returns:
             True if email sent successfully, False otherwise
@@ -272,8 +272,23 @@ class PerformanceChangeDetector:
         }
         
         # Use configured sender or default to onboarding email for testing
-        if from_email is None:
+        if from_email is None or not from_email.strip():
             from_email = "TTNN Performance Dashboard <onboarding@resend.dev>"
+            print(f"⚠️  Warning: Using default test sender (onboarding@resend.dev)")
+            print(f"   This can only send to the Resend account owner's email.")
+            print(f"   To send to other recipients, set FROM_EMAIL with a verified domain.")
+        
+        # Validate email format
+        if '@' not in from_email:
+            print(f"❌ Error: Invalid FROM_EMAIL format: {from_email}")
+            print(f"   Expected format: 'Name <email@domain.com>' or 'email@domain.com'")
+            return False
+        
+        # Check if using test domain
+        if 'resend.dev' in from_email.lower():
+            print(f"⚠️  Note: Using Resend test domain (resend.dev)")
+            print(f"   Emails can only be sent to your Resend account email address.")
+            print(f"   To send to '{to_email}', verify a custom domain and update FROM_EMAIL.")
         
         payload = {
             "from": from_email,
@@ -284,6 +299,9 @@ class PerformanceChangeDetector:
         
         try:
             print(f"📧 Sending email to {to_email}...")
+            print(f"   From: {from_email}")
+            print(f"   Subject: {subject}")
+            
             response = requests.post(url, json=payload, headers=headers)
             
             if response.status_code == 200:
@@ -293,6 +311,22 @@ class PerformanceChangeDetector:
             else:
                 print(f"❌ Failed to send email. Status code: {response.status_code}")
                 print(f"   Response: {response.text}")
+                
+                # Provide helpful error messages for common issues
+                if response.status_code == 403:
+                    response_data = response.json() if response.headers.get('content-type') == 'application/json' else {}
+                    error_message = response_data.get('message', '')
+                    
+                    if 'domain' in error_message.lower() or 'resend.dev' in error_message.lower():
+                        print(f"\n💡 Domain Restriction Issue:")
+                        print(f"   The sender domain needs to be verified with Resend.")
+                        print(f"   Current sender: {from_email}")
+                        print(f"   ")
+                        print(f"   To fix this:")
+                        print(f"   1. Verify a custom domain in your Resend account")
+                        print(f"   2. Set FROM_EMAIL environment variable (e.g., 'alerts@yourdomain.com')")
+                        print(f"   3. Update the GitHub Actions workflow or secrets")
+                
                 return False
                 
         except Exception as e:
