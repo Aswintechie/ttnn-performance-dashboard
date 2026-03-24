@@ -278,20 +278,32 @@ class PerformanceChangeDetector:
             print(f"   This can only send to the Resend account owner's email.")
             print(f"   To send to other recipients, set FROM_EMAIL with a verified domain.")
         
-        # Validate email format (basic check for @ symbol and domain part)
-        if '@' not in from_email or from_email.count('@') != 1:
+        # Validate email format
+        # First check for basic @ presence
+        if '@' not in from_email:
             print(f"❌ Error: Invalid FROM_EMAIL format: {from_email}")
             print(f"   Expected format: 'Name <email@domain.com>' or 'email@domain.com'")
             return False
         
-        # Extract email from "Name <email@domain.com>" format if needed
+        # Extract email from "Name <email@domain.com>" format if present
         email_part = from_email
         if '<' in from_email and '>' in from_email:
-            email_part = from_email.split('<')[1].split('>')[0]
+            try:
+                email_part = from_email.split('<')[1].split('>')[0].strip()
+            except:
+                print(f"❌ Error: Invalid FROM_EMAIL format: {from_email}")
+                print(f"   Expected format: 'Name <email@domain.com>' or 'email@domain.com'")
+                return False
         
-        # Basic validation: email should have @ with parts on both sides
+        # Validate the extracted email: must have exactly one @ with valid parts
+        if email_part.count('@') != 1:
+            print(f"❌ Error: Invalid FROM_EMAIL format: {from_email}")
+            print(f"   Expected format: 'Name <email@domain.com>' or 'email@domain.com'")
+            return False
+        
+        # Split and validate user@domain parts
         parts = email_part.split('@')
-        if len(parts) != 2 or not parts[0] or not parts[1] or '.' not in parts[1]:
+        if not parts[0] or not parts[1] or '.' not in parts[1]:
             print(f"❌ Error: Invalid email format in FROM_EMAIL: {from_email}")
             print(f"   Email must have format: user@domain.com")
             return False
@@ -327,7 +339,7 @@ class PerformanceChangeDetector:
                 # Provide helpful error messages for common issues
                 if response.status_code == 403:
                     response_data = {}
-                    content_type = response.headers.get('content-type', '')
+                    content_type = response.headers.get('content-type', '').lower()
                     if 'application/json' in content_type:
                         try:
                             response_data = response.json()

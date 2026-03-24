@@ -96,9 +96,9 @@ To send alerts to a different email:
 
 ### Use Custom Sender Email (Production)
 
-For production use with a verified domain:
+> **⚠️ IMPORTANT:** The default sender (`onboarding@resend.dev`) is for testing only and can only send emails to the Resend account owner's email address. To send emails to other recipients, you must verify a custom domain.
 
-**Important:** The default sender (`onboarding@resend.dev`) is for testing only and can only send emails to the Resend account owner's email address. To send emails to other recipients, you must verify a custom domain.
+For production use with a verified domain:
 
 #### Option 1: Verify a Domain (Recommended for Production)
 
