@@ -43,6 +43,9 @@ jobs:
           ALERT_EMAIL: 'aswin@aswincloud.com'
           PERF_CHANGE_THRESHOLD: '20.0'
           SEND_TEST_EMAIL: ${{ inputs.send_test_email && 'true' || 'false' }}
+          # FROM_EMAIL: Set this to use a verified domain (e.g., 'TTNN Alerts <alerts@yourdomain.com>')
+          # If not set, defaults to 'onboarding@resend.dev' which can only send to Resend account owner
+          FROM_EMAIL: ${{ secrets.FROM_EMAIL || '' }}
         run: |
           echo "🔍 Checking for performance changes..."
           python check_perf_changes.py
