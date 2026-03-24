@@ -366,7 +366,6 @@ class PerformanceChangeDetector:
                             response_data = response.json()
                         except json.JSONDecodeError as e:
                             print(f"⚠️  Warning: Could not parse error response as JSON: {e}")
-                            pass
                     
                     error_message = response_data.get('message', '')
                     

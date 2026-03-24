@@ -132,7 +132,7 @@ The FROM_EMAIL should be in one of these formats:
 ```
 alerts@yourdomain.com
 TTNN Alerts <alerts@yourdomain.com>
-"TTNN Performance Dashboard" <noreply@yourdomain.com>
+TTNN Performance Dashboard <noreply@yourdomain.com>
 ```
 
 ## 🧪 Testing Locally
