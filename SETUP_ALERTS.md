@@ -96,14 +96,44 @@ To send alerts to a different email:
 
 ### Use Custom Sender Email (Production)
 
+> **⚠️ IMPORTANT:** The default sender (`onboarding@resend.dev`) is for testing only and can only send emails to the Resend account owner's email address. To send emails to other recipients, you must verify a custom domain.
+
 For production use with a verified domain:
 
-1. Verify your domain in Resend dashboard
-2. Add `FROM_EMAIL` to GitHub secrets or workflow:
-   ```yaml
-   env:
-     FROM_EMAIL: 'alerts@yourdomain.com'
-   ```
+#### Option 1: Verify a Domain (Recommended for Production)
+
+1. **Verify your domain in Resend:**
+   - Go to [Resend Dashboard](https://resend.com/domains)
+   - Click **Add Domain**
+   - Enter your domain (e.g., `yourdomain.com`)
+   - Follow the instructions to add DNS records
+   - Wait for verification (usually a few minutes)
+
+2. **Add FROM_EMAIL to GitHub secrets:**
+   - Go to **Settings** → **Secrets and variables** → **Actions**
+   - Click **New repository secret**
+   - Set:
+     - **Name**: `FROM_EMAIL`
+     - **Value**: `TTNN Alerts <alerts@yourdomain.com>` (use your verified domain)
+   - Click **Add secret**
+
+3. **The workflow will automatically use this sender**
+
+#### Option 2: Use Test Domain (Development Only)
+
+If you're just testing and the recipient email matches your Resend account email:
+- No additional setup needed
+- Default sender `onboarding@resend.dev` will be used
+- Can only send to the email address registered with your Resend account
+
+#### Sender Email Format
+
+The FROM_EMAIL should be in one of these formats:
+```
+alerts@yourdomain.com
+TTNN Alerts <alerts@yourdomain.com>
+TTNN Performance Dashboard <noreply@yourdomain.com>
+```
 
 ## 🧪 Testing Locally
 
@@ -139,6 +169,28 @@ This will:
 - Check workflow logs for any errors
 
 ## 🔍 Troubleshooting
+
+### Issue: "Testing domain restriction" error
+
+**Error Message:**
+```
+Testing domain restriction: The resend.dev domain is for testing and can only 
+send to your own email address. To send to other recipients, verify a domain 
+and update the from address to use it.
+```
+
+**Cause:** You're using the default test sender (`onboarding@resend.dev`) but trying to send to an email that's not your Resend account email.
+
+**Solutions:**
+1. **Option A - Verify a custom domain (Recommended):**
+   - Go to [Resend Dashboard](https://resend.com/domains)
+   - Add and verify your custom domain
+   - Add `FROM_EMAIL` secret with your verified domain email
+   - See [Use Custom Sender Email](#use-custom-sender-email-production) section above
+
+2. **Option B - Use account email for testing:**
+   - Change `ALERT_EMAIL` in the workflow to match your Resend account email
+   - This is only suitable for testing, not production use
 
 ### Issue: No email received
 
